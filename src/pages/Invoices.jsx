@@ -114,7 +114,7 @@ export default function Invoices() {
                                                         <Eye className="h-4 w-4" />
                                                     </Button>
                                                 </Link>
-                                                <Link to={`/invoices/${invoice.id}/print`} target="_blank">
+                                                <Link to={`/invoices/${invoice.id}/print`}>
                                                     <Button variant="ghost" size="icon">
                                                         <Printer className="h-4 w-4" />
                                                     </Button>
