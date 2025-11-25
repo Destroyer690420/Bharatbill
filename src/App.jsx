@@ -9,6 +9,8 @@ import Parties from "@/pages/Parties";
 import Products from "@/pages/Products";
 import Invoices from "@/pages/Invoices";
 import InvoiceForm from "@/pages/InvoiceForm";
+import Quotations from "@/pages/Quotations";
+import QuotationForm from "@/pages/QuotationForm";
 import InvoicePrint from "@/pages/InvoicePrint";
 import Settings from "@/pages/Settings";
 import Payments from "@/pages/Payments";
@@ -78,6 +80,27 @@ function App() {
           <Route path="/invoices/:id/print" element={
             <PrivateRoute>
               <InvoicePrint />
+            </PrivateRoute>
+          } />
+          <Route path="/quotations" element={
+            <PrivateRoute>
+              <Layout>
+                <Quotations />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/quotations/new" element={
+            <PrivateRoute>
+              <Layout>
+                <QuotationForm />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/quotations/:id" element={
+            <PrivateRoute>
+              <Layout>
+                <QuotationForm />
+              </Layout>
             </PrivateRoute>
           } />
           <Route path="/settings" element={

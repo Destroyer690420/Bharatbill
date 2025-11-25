@@ -20,12 +20,14 @@ export default function Dashboard() {
 
         const fetchData = async () => {
             try {
-                // Fetch all invoices
+                // Fetch only Tax Invoices (exclude Quotations and Proforma Invoices)
                 const invoicesSnap = await getDocs(collection(db, "users", currentUser.uid, "invoices"));
-                const invoicesData = invoicesSnap.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                const invoicesData = invoicesSnap.docs
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }))
+                    .filter(inv => inv.documentType === "Tax Invoice"); // Only Tax Invoices
                 setInvoices(invoicesData);
 
                 // Fetch all payments

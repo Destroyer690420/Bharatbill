@@ -43,8 +43,12 @@ export default function PartyLedger() {
                     setParty(partySnap.data());
                 }
 
-                // Fetch All Invoices (Debits)
-                const invoicesQ = query(collection(db, "users", currentUser.uid, "invoices"), where("buyerDetails.id", "==", id));
+                // Fetch Only Tax Invoices (Debits) - Exclude Quotations and Proforma Invoices
+                const invoicesQ = query(
+                    collection(db, "users", currentUser.uid, "invoices"),
+                    where("buyerDetails.id", "==", id),
+                    where("documentType", "==", "Tax Invoice")
+                );
                 const invoicesSnap = await getDocs(invoicesQ);
                 const allInvoices = invoicesSnap.docs.map(doc => ({
                     id: doc.id,

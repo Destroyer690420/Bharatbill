@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, Package, FileText, LogOut, Settings, CreditCard, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Package, FileText, LogOut, Settings, CreditCard, Menu, X, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -13,6 +13,7 @@ export default function Layout({ children }) {
     const navItems = [
         { href: "/", label: "Dashboard", icon: LayoutDashboard },
         { href: "/invoices", label: "Invoices", icon: FileText },
+        { href: "/quotations", label: "Quotations", icon: FileSpreadsheet },
         { href: "/payments", label: "Payments", icon: CreditCard },
         { href: "/parties", label: "Parties", icon: Users },
         { href: "/products", label: "Products", icon: Package },

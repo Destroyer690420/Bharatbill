@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { numberToWords } from "@/lib/numberToWords";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 
 export default function InvoicePrint() {
     const { id } = useParams();
@@ -96,6 +96,12 @@ export default function InvoicePrint() {
     const documentType = invoice.documentType || "Tax Invoice";
     const documentTitle = documentType;
 
+    // Check if this is a Quotation (Proforma Invoices use invoice layout)
+    const isQuotation = documentType === "Quotation";
+
+    // Calculate Valid Until Date (30 days from invoice date for quotations)
+    const validUntilDate = isQuotation ? addDays(new Date(invoice.date), 30) : null;
+
     // Determine copy text based on document type
     const getCopyText = (copyNumber) => {
         if (documentType === "Quotation") {
@@ -104,6 +110,148 @@ export default function InvoicePrint() {
             return copyNumber === 1 ? "ORIGINAL FOR RECIPIENT" : "DUPLICATE FOR TRANSPORTER";
         }
     };
+
+    // Professional Quotation Layout (Single Page)
+    const renderQuotation = () => (
+        <div className="quotation-page">
+            <div className="quotation-container">
+                {/* Header */}
+                <div className="quotation-header">
+                    <div className="company-info">
+                        <div className="company-name">{company.companyName}</div>
+                        <div className="company-address">{company.address}</div>
+                        <div style={{ fontSize: '9pt', marginTop: '4px' }}>GSTIN: {company.gstin}</div>
+                        <div style={{ fontSize: '9pt' }}>State: {company.state} ({company.stateCode})</div>
+                    </div>
+                    <div className="quotation-title-section">
+                        <div className="quotation-title">{documentType.toUpperCase()}</div>
+                        <div className="quotation-details">
+                            <div className="detail-row">
+                                <span className="detail-label">Quotation No:</span>
+                                <span className="detail-value">{invoice.invoiceNo}</span>
+                            </div>
+                            <div className="detail-row">
+                                <span className="detail-label">Date:</span>
+                                <span className="detail-value">{format(new Date(invoice.date), "dd-MMM-yyyy")}</span>
+                            </div>
+                            {validUntilDate && (
+                                <div className="detail-row">
+                                    <span className="detail-label">Valid Until:</span>
+                                    <span className="detail-value">{format(validUntilDate, "dd-MMM-yyyy")}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Client Section */}
+                <div className="client-section">
+                    <div className="section-title">Quotation For:</div>
+                    <div className="client-name">{buyer?.name}</div>
+                    <div className="client-address">{buyer?.address}</div>
+                    {buyer?.gstin && <div style={{ fontSize: '9pt', marginTop: '4px' }}>GSTIN: {buyer.gstin}</div>}
+                    {buyer?.state && <div style={{ fontSize: '9pt' }}>State: {buyer.state}</div>}
+                </div>
+
+                {/* Items Table */}
+                <div className="items-section">
+                    <table className="quotation-table">
+                        <thead>
+                            <tr>
+                                <th className="col-sno">S.No</th>
+                                <th className="col-description">Description</th>
+                                <th className="col-hsn">HSN</th>
+                                <th className="col-qty">Qty</th>
+                                <th className="col-rate">Rate</th>
+                                <th className="col-amount">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {itemsWithTax.map((item, index) => (
+                                <tr key={index}>
+                                    <td className="text-center">{index + 1}</td>
+                                    <td className="description-cell">{item.description}</td>
+                                    <td className="text-center text-sm">{item.hsnCode}</td>
+                                    <td className="text-center">{item.qty} {item.per}</td>
+                                    <td className="text-right">₹{item.rate.toFixed(2)}</td>
+                                    <td className="text-right font-semibold">₹{item.amount.toFixed(2)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Totals Section */}
+                <div className="totals-section">
+                    <div className="totals-grid">
+                        <div className="total-row">
+                            <span>Subtotal:</span>
+                            <span>₹{subTotal.toFixed(2)}</span>
+                        </div>
+                        {freightCharges > 0 && (
+                            <div className="total-row">
+                                <span>Freight Charges:</span>
+                                <span>₹{freightCharges.toFixed(2)}</span>
+                            </div>
+                        )}
+                        <div className="total-row">
+                            <span>Taxable Value:</span>
+                            <span>₹{taxableValue.toFixed(2)}</span>
+                        </div>
+                        <div className="total-row">
+                            <span>{isIGST ? "IGST @ 18%" : "GST (CGST 9% + SGST 9%)"}</span>
+                            <span>₹{totalTaxAmount.toFixed(2)}</span>
+                        </div>
+                        <div className="total-row grand-total">
+                            <span>Grand Total:</span>
+                            <span>₹{grandTotal.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div className="amount-words">
+                        Amount in Words: <span className="font-semibold">{numberToWords(grandTotalWordAmount)}</span>
+                    </div>
+                </div>
+
+                {/* Terms & Conditions */}
+                <div className="terms-section">
+                    <div className="section-title">Terms & Conditions</div>
+                    <div className="terms-content">
+                        {invoice.termsOfDelivery || company.termsAndConditions ? (
+                            <div className="whitespace-pre-line">{invoice.termsOfDelivery || company.termsAndConditions}</div>
+                        ) : (
+                            <>
+                                <div>1. Prices are valid for 30 days from the quotation date</div>
+                                <div>2. 50% advance payment required to confirm the order, remaining 50% before dispatch</div>
+                                <div>3. Delivery period: 20-30 working days from receipt of advance payment</div>
+                                <div>4. Delivery charges extra as per actual</div>
+                                <div>5. All disputes subject to {company.state} jurisdiction</div>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                {/* Bank Details */}
+                {company.bankDetails && (
+                    <div className="bank-section">
+                        <div className="section-title">Bank Details</div>
+                        <div className="bank-content">{company.bankDetails}</div>
+                    </div>
+                )}
+
+                {/* Footer */}
+                <div className="quotation-footer">
+                    <div className="footer-note">
+                        We trust this quotation meets your requirements and look forward to serving you.
+                    </div>
+                    <div className="signature-section">
+                        <div>For {company.companyName}</div>
+                        <div className="signature-space"></div>
+                        <div>Authorized Signatory</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
     const renderInvoice = (copyNumber) => (
         <div className="a4-page">
@@ -167,7 +315,7 @@ export default function InvoicePrint() {
                                     ? "Terms and Conditions"
                                     : "Terms of Delivery"}
                             </div>
-                            <div style={{ fontSize: '7pt', lineHeight: '1.4' }}>
+                            <div style={{ fontSize: '7pt', lineHeight: '1.4', whiteSpace: 'pre-line' }}>
                                 {documentType === "Proforma Invoice" || documentType === "Quotation" ? (
                                     invoice.termsOfDelivery ||
                                     "1. 50% advance payment required to confirm the order and remaining 50% before dispatch\n2. Delivery period: 20-30 working days from receipt of advance payment\n3. Delivery charges extra as per actual"
@@ -399,8 +547,7 @@ export default function InvoicePrint() {
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Arimo:wght@400;700&display=swap');
                 
-
-
+                /* === INVOICE STYLES === */
                 .a4-page {
                     width: 210mm;
                     height: 296mm;
@@ -416,14 +563,6 @@ export default function InvoicePrint() {
                     page-break-after: always;
                 }
 
-                .a4-page:last-child {
-                    page-break-after: always; /* Ensure even the last page has a break if needed, or auto if it's the very end */
-                }
-                
-                /* Specific fix for the last page to not create an empty 3rd page if not needed, 
-                   but usually 'always' on the first one is enough. 
-                   Let's keep the logic: First invoice -> break. Second invoice -> no break needed after it.
-                */
                 .a4-page:last-child {
                     page-break-after: auto;
                 }
@@ -452,6 +591,301 @@ export default function InvoicePrint() {
                 .tax-analysis-table { width: 100%; border-collapse: collapse; }
                 .tax-analysis-table th, .tax-analysis-table td { border: 1px solid #000; padding: 6px; text-align: center; font-size: 8pt; }
                 .tax-analysis-table th { background: #f0f0f0; }
+
+                /* === QUOTATION STYLES === */
+                .quotation-page {
+                    width: 210mm;
+                    min-height: 297mm;
+                    max-height: 297mm;
+                    background: white;
+                    color: #000;
+                    font-family: 'Inter', sans-serif;
+                    font-size: 10pt;
+                    box-sizing: border-box;
+                    padding: 15mm 15mm 10mm 15mm;
+                    margin: 0 auto;
+                    page-break-after: auto;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .quotation-container {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .quotation-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 20px;
+                    padding-bottom: 15px;
+                    border-bottom: 2px solid #2563eb;
+                }
+
+                .company-info {
+                    flex: 1;
+                }
+
+                .company-name {
+                    font-size: 18pt;
+                    font-weight: 700;
+                    color: #1e3a8a;
+                    margin-bottom: 8px;
+                }
+
+                .company-address {
+                    font-size: 9pt;
+                    color: #4b5563;
+                    line-height: 1.5;
+                    white-space: pre-line;
+                    margin-bottom: 6px;
+                }
+
+                .quotation-title-section {
+                    text-align: right;
+                }
+
+                .quotation-title {
+                    font-size: 24pt;
+                    font-weight: 800;
+                    color: #1e3a8a;
+                    margin-bottom: 10px;
+                    letter-spacing: 1px;
+                }
+
+                .quotation-details {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+
+                .detail-row {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 10px;
+                    font-size: 9pt;
+                }
+
+                .detail-label {
+                    font-weight: 600;
+                    color: #6b7280;
+                }
+
+                .detail-value {
+                    font-weight: 500;
+                    color: #111827;
+                }
+
+                .client-section {
+                    background: #f8fafc;
+                    padding: 12px 15px;
+                    border-radius: 6px;
+                    margin-bottom: 20px;
+                    border-left: 4px solid #2563eb;
+                }
+
+                .section-title {
+                    font-size: 9pt;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    color: #6b7280;
+                    margin-bottom: 8px;
+                    letter-spacing: 0.5px;
+                }
+
+                .client-name {
+                    font-size: 12pt;
+                    font-weight: 700;
+                    color: #111827;
+                    margin-bottom: 5px;
+                }
+
+                .client-address {
+                    font-size: 9pt;
+                    color: #4b5563;
+                    line-height: 1.5;
+                    white-space: pre-line;
+                }
+
+                .items-section {
+                    margin-bottom: 20px;
+                    flex: 1;
+                }
+
+                .quotation-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    background: white;
+                }
+
+                .quotation-table thead {
+                    background: #e0f2fe;
+                    border-bottom: 2px solid #2563eb;
+                }
+
+                .quotation-table th {
+                    padding: 10px 8px;
+                    text-align: left;
+                    font-weight: 600;
+                    font-size: 9pt;
+                    color: #1e40af;
+                    text-transform: uppercase;
+                    letter-spacing: 0.3px;
+                }
+
+                .quotation-table tbody tr {
+                    border-bottom: 1px solid #e5e7eb;
+                }
+
+                .quotation-table tbody tr:last-child {
+                    border-bottom: 2px solid #cbd5e1;
+                }
+
+                .quotation-table td {
+                    padding: 8px;
+                    font-size: 9pt;
+                    vertical-align: top;
+                }
+
+                .col-sno {
+                    width: 5%;
+                    text-align: center;
+                }
+
+                .col-description {
+                    width: 45%;
+                }
+
+                .col-hsn {
+                    width: 12%;
+                    text-align: center;
+                }
+
+                .col-qty {
+                    width: 10%;
+                    text-align: center;
+                }
+
+                .col-rate {
+                    width: 13%;
+                    text-align: right;
+                }
+
+                .col-amount {
+                    width: 15%;
+                    text-align: right;
+                }
+
+                .description-cell {
+                    line-height: 1.5;
+                    white-space: pre-line;
+                    color: #111827;
+                }
+
+                .text-sm {
+                    font-size: 8pt;
+                    color: #6b7280;
+                }
+
+                .totals-section {
+                    margin-bottom: 20px;
+                    border-top: 2px solid #cbd5e1;
+                    padding-top: 15px;
+                }
+
+                .totals-grid {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-end;
+                    gap: 6px;
+                    margin-bottom: 12px;
+                }
+
+                .total-row {
+                    display: grid;
+                    grid-template-columns: 200px 120px;
+                    gap: 20px;
+                    font-size: 9pt;
+                }
+
+                .total-row.grand-total {
+                    font-size: 12pt;
+                    font-weight: 700;
+                    color: #1e3a8a;
+                    border-top: 2px solid #2563eb;
+                    padding-top: 8px;
+                    margin-top: 8px;
+                }
+
+                .amount-words {
+                    font-size: 9pt;
+                    color: #374151;
+                    padding: 8px 12px;
+                    background: #f1f5f9;
+                    border-radius: 4px;
+                    border-left: 3px solid #2563eb;
+                }
+
+                .terms-section {
+                    margin-bottom: 15px;
+                }
+
+                .terms-content {
+                    font-size: 8.5pt;
+                    color: #374151;
+                    line-height: 1.6;
+                    padding: 10px 0;
+                }
+
+                .terms-content > div {
+                    margin-bottom: 4px;
+                }
+
+                .bank-section {
+                    margin-bottom: 15px;
+                    font-size: 8.5pt;
+                }
+
+                .bank-content {
+                    background: #f8fafc;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    color: #374151;
+                    line-height: 1.5;
+                    white-space: pre-line;
+                }
+
+                .quotation-footer {
+                    margin-top: auto;
+                    padding-top: 15px;
+                    border-top: 1px solid #cbd5e1;
+                }
+
+                .footer-note {
+                    font-size: 8.5pt;
+                    color: #6b7280;
+                    font-style: italic;
+                    margin-bottom: 20px;
+                }
+
+                .signature-section {
+                    text-align: right;
+                    font-size: 9pt;
+                }
+
+                .signature-space {
+                    margin: 30px 0 10px;
+                }
+
+                .font-semibold {
+                    font-weight: 600;
+                }
+
+                .whitespace-pre-line {
+                    white-space: pre-line;
+                }
                 
                 .text-right { text-align: right; }
                 .text-center { text-align: center; }
@@ -459,7 +893,7 @@ export default function InvoicePrint() {
             `}</style>
 
             <div className="no-print fixed top-0 left-0 right-0 bg-card text-card-foreground border-b border-border p-4 flex justify-between items-center z-50">
-                <div className="font-bold text-lg">Invoice Preview</div>
+                <div className="font-bold text-lg">{isQuotation ? "Quotation Preview" : "Invoice Preview"}</div>
                 <div className="flex gap-2">
                     <button onClick={handleDownloadPDF} className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded">
                         <Download size={16} /> Download PDF
@@ -469,8 +903,16 @@ export default function InvoicePrint() {
 
             <div className="pt-20 bg-muted min-h-screen flex flex-col items-center gap-8 pb-8">
                 <div ref={pdfRef}>
-                    {renderInvoice(1)}
-                    {renderInvoice(2)}
+                    {isQuotation ? (
+                        // Single page for Quotations/Proforma Invoices
+                        renderQuotation()
+                    ) : (
+                        // Two copies for Tax Invoices
+                        <>
+                            {renderInvoice(1)}
+                            {renderInvoice(2)}
+                        </>
+                    )}
                 </div>
             </div>
         </div >

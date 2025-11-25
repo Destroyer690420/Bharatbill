@@ -15,7 +15,7 @@ import { Trash2, Plus, Save } from "lucide-react";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function InvoiceForm() {
+export default function QuotationForm() {
     const { currentUser } = useAuth();
     const navigate = useNavigate();
     const { id } = useParams();
@@ -30,7 +30,7 @@ export default function InvoiceForm() {
 
     const { register, control, handleSubmit, setValue, watch, formState: { errors } } = useForm({
         defaultValues: {
-            documentType: "Tax Invoice", // Hard-coded to Tax Invoice only
+            documentType: "Quotation",
             invoiceNo: "",
             date: format(new Date(), "yyyy-MM-dd"),
             buyerId: "",
@@ -72,31 +72,51 @@ export default function InvoiceForm() {
         fetchData();
     }, [currentUser]);
 
-    // Auto-generate Tax Invoice Number
+    // Auto-generate Invoice Number based on Document Type
     useEffect(() => {
         if (!currentUser || id) return; // Don't auto-generate when editing
 
         const generateInvoiceNumber = async () => {
-            // Fetch all Tax Invoices to find the last number
+            const docType = watch("documentType") || "Quotation";
+
+            // Fetch all invoices to find the last number for this type
             const invoicesSnap = await getDocs(collection(db, "users", currentUser.uid, "invoices"));
             const invoices = invoicesSnap.docs.map(d => d.data());
 
-            // Filter by Tax Invoice type
-            const taxInvoices = invoices.filter(inv => inv.documentType === "Tax Invoice");
+            // Filter by document type
+            const sameTypeInvoices = invoices.filter(inv => inv.documentType === docType);
 
             let nextNumber = 1;
-            const prefix = "NFI/2025-26/";
+            let prefix = "";
 
-            // Extract numbers from existing tax invoices
-            const numbers = taxInvoices
-                .map(inv => {
-                    const match = inv.invoiceNo?.match(/NFI\/2025-26\/(\d+)/);
-                    return match ? parseInt(match[1]) : 0;
-                })
-                .filter(n => n > 0);
+            if (docType === "Proforma Invoice") {
+                // Format: NFI/PI/2325/XX
+                prefix = "NFI/PI/2325/";
 
-            if (numbers.length > 0) {
-                nextNumber = Math.max(...numbers) + 1;
+                const numbers = sameTypeInvoices
+                    .map(inv => {
+                        const match = inv.invoiceNo?.match(/NFI\/PI\/2325\/(\d+)/);
+                        return match ? parseInt(match[1]) : 0;
+                    })
+                    .filter(n => n > 0);
+
+                if (numbers.length > 0) {
+                    nextNumber = Math.max(...numbers) + 1;
+                }
+            } else if (docType === "Quotation") {
+                // Format: QT/2325/XX
+                prefix = "QT/2325/";
+
+                const numbers = sameTypeInvoices
+                    .map(inv => {
+                        const match = inv.invoiceNo?.match(/QT\/2325\/(\d+)/);
+                        return match ? parseInt(match[1]) : 0;
+                    })
+                    .filter(n => n > 0);
+
+                if (numbers.length > 0) {
+                    nextNumber = Math.max(...numbers) + 1;
+                }
             }
 
             const newInvoiceNo = `${prefix}${nextNumber}`;
@@ -104,13 +124,13 @@ export default function InvoiceForm() {
         };
 
         generateInvoiceNumber();
-    }, [currentUser, id, setValue]);
+    }, [currentUser, id, watch("documentType")]);
 
-    // Fetch Invoice if editing
+    // Fetch Quotation if editing
     useEffect(() => {
         if (!currentUser || !id) return;
 
-        const fetchInvoice = async () => {
+        const fetchQuotation = async () => {
             const docSnap = await getDoc(doc(db, "users", currentUser.uid, "invoices", id));
             if (docSnap.exists()) {
                 const data = docSnap.data();
@@ -121,19 +141,8 @@ export default function InvoiceForm() {
             }
         };
 
-        fetchInvoice();
+        fetchQuotation();
     }, [currentUser, id, setValue]);
-
-    // Auto-fill Buyer/Consignee details
-    const handlePartyChange = (partyId, type) => {
-        const party = parties.find(p => p.id === partyId);
-        if (party) {
-            // In a real app, we might store the full party object or just the ID.
-            // For the invoice, we usually want to snapshot the details at that time.
-            // But for the form, we just set the ID.
-            // We'll store the snapshot on save.
-        }
-    };
 
     // Calculations
     const calculateTotals = (items) => {
@@ -158,18 +167,14 @@ export default function InvoiceForm() {
     const freightCharges = parseFloat(watch("freightCharges") || 0);
     const taxableValue = subTotal + freightCharges;
 
-    // Tax Calculation (Simplified for now - assuming 18% IGST or 9+9 CGST/SGST)
-    // We need to check state codes to decide IGST vs CGST/SGST
     const buyerId = watch("buyerId");
     const buyer = parties.find(p => p.id === buyerId);
     const companyStateCode = currentUser?.profile?.companyProfile?.stateCode;
-    const buyerStateCode = buyer?.state; // Assuming state is the code or we parse it. 
-    // For MVP, let's just assume if strings match, it's intra-state.
+    const buyerStateCode = buyer?.state;
 
     const isInterState = companyStateCode && buyerStateCode && companyStateCode.toLowerCase() !== buyerStateCode.toLowerCase();
-    const taxRate = 18; // Default 18% for now, or fetch from items (complex)
+    const taxRate = 18;
 
-    // Tax is calculated on (Item Subtotal + Freight)
     const totalTax = taxableValue * (taxRate / 100);
     const grandTotal = taxableValue + totalTax;
 
@@ -180,10 +185,10 @@ export default function InvoiceForm() {
             const buyerDetails = parties.find(p => p.id === data.buyerId);
             const consigneeDetails = parties.find(p => p.id === data.consigneeId);
 
-            const invoiceData = {
+            const quotationData = {
                 ...data,
-                buyerDetails, // Snapshot
-                consigneeDetails, // Snapshot
+                buyerDetails,
+                consigneeDetails,
                 subTotal,
                 freightCharges: parseFloat(data.freightCharges || 0),
                 taxableValue,
@@ -194,13 +199,13 @@ export default function InvoiceForm() {
             };
 
             if (id) {
-                await updateDoc(doc(db, "users", currentUser.uid, "invoices", id), invoiceData);
+                await updateDoc(doc(db, "users", currentUser.uid, "invoices", id), quotationData);
             } else {
-                await addDoc(collection(db, "users", currentUser.uid, "invoices"), invoiceData);
+                await addDoc(collection(db, "users", currentUser.uid, "invoices"), quotationData);
             }
-            navigate("/invoices");
+            navigate("/quotations");
         } catch (err) {
-            setError("Failed to save invoice: " + err.message);
+            setError("Failed to save quotation: " + err.message);
         }
         setLoading(false);
     };
@@ -241,18 +246,36 @@ export default function InvoiceForm() {
     return (
         <div className="space-y-6 max-w-5xl mx-auto pb-20">
             <div className="flex justify-between items-center">
-                <h2 className="text-3xl font-bold tracking-tight">{id ? "Edit Tax Invoice" : "New Tax Invoice"}</h2>
+                <h2 className="text-3xl font-bold tracking-tight">{id ? "Edit Quotation" : "New Quotation"}</h2>
             </div>
 
             {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <Card>
-                    <CardHeader><CardTitle>Tax Invoice Details</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>Quotation Details</CardTitle></CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2 md:col-span-3">
+                            <Label>Document Type</Label>
+                            <Select
+                                onValueChange={(val) => {
+                                    setValue("documentType", val);
+                                    setValue("invoiceNo", "");
+                                }}
+                                defaultValue={watch("documentType") || "Quotation"}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Document Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Quotation">Quotation</SelectItem>
+                                    <SelectItem value="Proforma Invoice">Proforma Invoice</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="space-y-2">
                             <Label>Invoice No</Label>
-                            <Input {...register("invoiceNo")} placeholder="e.g. NFI/2025-26/1" required />
+                            <Input {...register("invoiceNo")} placeholder="e.g. QT/2325/1" required />
                         </div>
                         <div className="space-y-2">
                             <Label>Date</Label>
@@ -264,7 +287,7 @@ export default function InvoiceForm() {
                         </div>
                         <div className="space-y-2">
                             <Label>Buyer (Bill To)</Label>
-                            <Select onValueChange={(val) => { setValue("buyerId", val); handlePartyChange(val, 'buyer'); }}>
+                            <Select onValueChange={(val) => setValue("buyerId", val)}>
                                 <SelectTrigger><SelectValue placeholder="Select Buyer" /></SelectTrigger>
                                 <SelectContent>
                                     {parties.filter(p => p.type === 'buyer' || !p.type).map(p => (
@@ -321,7 +344,6 @@ export default function InvoiceForm() {
                                                         }
                                                     }}
                                                     onBlur={() => {
-                                                        // Delay to allow click on suggestion
                                                         setTimeout(() => {
                                                             setShowSuggestions(prev => ({ ...prev, [index]: false }));
                                                         }, 200);
@@ -402,8 +424,8 @@ export default function InvoiceForm() {
                 </Card>
 
                 <div className="flex justify-end gap-4">
-                    <Button type="button" variant="outline" onClick={() => navigate("/invoices")}>Cancel</Button>
-                    <Button type="submit" disabled={loading}><Save className="mr-2 h-4 w-4" /> {loading ? "Saving..." : "Save Invoice"}</Button>
+                    <Button type="button" variant="outline" onClick={() => navigate("/quotations")}>Cancel</Button>
+                    <Button type="submit" disabled={loading}><Save className="mr-2 h-4 w-4" /> {loading ? "Saving..." : "Save Quotation"}</Button>
                 </div>
             </form>
         </div>
