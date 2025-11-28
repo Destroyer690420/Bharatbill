@@ -24,7 +24,8 @@ export default function Login() {
     const [signupPassword, setSignupPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
-    async function handleGoogleLogin() {
+    async function handleGoogleLogin(e) {
+        if (e) e.preventDefault();
         try {
             setError("");
             setLoading(true);
@@ -192,7 +193,7 @@ export default function Login() {
                         </div>
                     </div>
 
-                    <Button onClick={handleGoogleLogin} className="w-full" variant="outline" disabled={loading}>
+                    <Button onClick={handleGoogleLogin} className="w-full" variant="outline" disabled={loading} type="button">
                         {loading ? "Signing in..." : (
                             <div className="flex items-center justify-center gap-2">
                                 <svg className="h-5 w-5" viewBox="0 0 24 24">
