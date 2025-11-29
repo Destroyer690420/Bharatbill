@@ -27,6 +27,7 @@ export default function Settings() {
         accountNo: "",
         ifsc: "",
         branch: "",
+        invoicePrefix: "INV",
     });
 
     // Theme state
@@ -149,6 +150,12 @@ export default function Settings() {
                                 <Label htmlFor="gstin">GSTIN</Label>
                                 <Input id="gstin" required value={formData.gstin} onChange={handleChange} />
                             </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="invoicePrefix">Invoice Prefix</Label>
+                            <Input id="invoicePrefix" value={formData.invoicePrefix || ""} onChange={handleChange} placeholder="e.g. INV" />
+                            <p className="text-xs text-muted-foreground">This code will be used as the prefix for your invoice numbers (e.g. INV/2025-26/01)</p>
                         </div>
 
                         <div className="space-y-2">

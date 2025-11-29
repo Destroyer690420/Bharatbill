@@ -77,6 +77,12 @@ export default function InvoiceForm() {
         if (!currentUser || id) return; // Don't auto-generate when editing
 
         const generateInvoiceNumber = async () => {
+            // Fetch user profile to get the prefix
+            const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+            const companyProfile = userDoc.data()?.companyProfile || {};
+            const prefixCode = companyProfile.invoicePrefix || "INV";
+            const prefix = `${prefixCode}/2025-26/`;
+
             // Fetch all Tax Invoices to find the last number
             const invoicesSnap = await getDocs(collection(db, "users", currentUser.uid, "invoices"));
             const invoices = invoicesSnap.docs.map(d => d.data());
@@ -85,13 +91,35 @@ export default function InvoiceForm() {
             const taxInvoices = invoices.filter(inv => inv.documentType === "Tax Invoice");
 
             let nextNumber = 1;
-            const prefix = "NFI/2025-26/";
 
             // Extract numbers from existing tax invoices
             const numbers = taxInvoices
                 .map(inv => {
-                    const match = inv.invoiceNo?.match(/NFI\/2025-26\/(\d+)/);
-                    return match ? parseInt(match[1]) : 0;
+                    // Dynamic regex based on the prefix
+                    // We need to escape special characters in prefix if any, but assuming simple alphanumeric for now
+                    // Actually, we should be careful. Let's just look for the pattern "PREFIX/2025-26/NUMBER"
+                    // But wait, if the user CHANGED the prefix, we might want to continue the sequence from the OLD prefix?
+                    // Or start a new sequence for the new prefix?
+                    // Usually, changing prefix means starting a new series or continuing. 
+                    // Requirement says: "If I set the prefix to "TATA" ... next generated invoice should be TATA/2025-26/36"
+                    // This implies continuing the count? Or just finding the max number of THAT prefix?
+                    // "If I set it to BILL, it should be BILL/2025-26/36" -> This implies the number 36 is global?
+                    // Or maybe 36 was just an example number.
+                    // Let's assume we want to find the max number across ALL tax invoices for the current financial year, regardless of prefix?
+                    // OR, more likely, we find the max number for THIS prefix.
+                    // If I change prefix, I probably want to start from 1 or continue.
+                    // Let's stick to: Find max number matching the CURRENT prefix pattern.
+                    // If the user wants to continue the number from a previous prefix, they might need to manually set the first one or we'd need more complex logic.
+                    // Given the requirement "Fallback: ... default to INV", let's assume we just look for the configured prefix.
+
+                    if (!inv.invoiceNo) return 0;
+
+                    // Check if invoice number starts with the prefix
+                    if (inv.invoiceNo.startsWith(prefix)) {
+                        const part = inv.invoiceNo.replace(prefix, "");
+                        return parseInt(part) || 0;
+                    }
+                    return 0;
                 })
                 .filter(n => n > 0);
 
