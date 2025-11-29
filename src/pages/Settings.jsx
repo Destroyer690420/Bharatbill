@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
@@ -30,26 +31,8 @@ export default function Settings() {
         invoicePrefix: "INV",
     });
 
-    // Theme state
-    const [theme, setTheme] = useState(() => {
-        const savedTheme = localStorage.getItem('theme');
-        return savedTheme || 'dark';
-    });
-
-    // Apply theme on mount and when theme changes
-    useEffect(() => {
-        const root = document.documentElement;
-        if (theme === 'light') {
-            root.classList.add('light');
-        } else {
-            root.classList.remove('light');
-        }
-        localStorage.setItem('theme', theme);
-    }, [theme]);
-
-    const toggleTheme = () => {
-        setTheme(theme === 'dark' ? 'light' : 'dark');
-    };
+    // Theme state from context
+    const { theme, toggleTheme } = useTheme();
 
     useEffect(() => {
         if (!currentUser) return;
