@@ -88,7 +88,7 @@ export default function PaymentForm() {
                 <Card>
                     <CardHeader><CardTitle>Payment Details</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Date</Label>
                                 <Input
@@ -117,7 +117,7 @@ export default function PaymentForm() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Amount (₹)</Label>
                                 <Input
@@ -166,18 +166,9 @@ export default function PaymentForm() {
                             />
                         </div>
 
-                        {/* Desktop Actions */}
-                        <div className="hidden md:flex justify-end gap-4 pt-4">
+                        <div className="flex justify-end gap-4 pt-4">
                             <Button type="button" variant="outline" onClick={() => navigate("/payments")}>Cancel</Button>
                             <Button type="submit" disabled={loading}>{loading ? "Saving..." : "Save Payment"}</Button>
-                        </div>
-
-                        {/* Mobile Sticky Actions */}
-                        <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-background border-t z-50 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-                            <Button type="button" variant="outline" className="flex-1" onClick={() => navigate("/payments")}>Cancel</Button>
-                            <Button type="submit" className="flex-1" disabled={loading}>
-                                {loading ? "Saving..." : "Save"}
-                            </Button>
                         </div>
                     </CardContent>
                 </Card>

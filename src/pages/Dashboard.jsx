@@ -277,7 +277,7 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                         {revenueData.length > 0 && revenueData.some(d => d.revenue > 0) ? (
-                            <ResponsiveContainer width="100%" height={256} className="h-64 sm:h-[300px]">
+                            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
                                 <BarChart data={revenueData}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="month" />
@@ -288,7 +288,7 @@ export default function Dashboard() {
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div className="h-64 sm:h-[300px] flex items-center justify-center text-muted-foreground">
+                            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
                                 No data available
                             </div>
                         )}
@@ -301,7 +301,7 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                         {productData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={256} className="h-64 sm:h-[300px]">
+                            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
                                 <PieChart>
                                     <Pie
                                         data={productData}
@@ -321,7 +321,7 @@ export default function Dashboard() {
                                 </PieChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div className="h-64 sm:h-[300px] flex items-center justify-center text-muted-foreground">
+                            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
                                 No data available
                             </div>
                         )}
@@ -337,17 +337,17 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                         {recentInvoices.length > 0 ? (
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {recentInvoices.map((inv, idx) => (
-                                    <div key={idx} className="flex justify-between items-center p-3 border rounded-lg shadow-sm bg-card hover:bg-accent/50 transition-colors">
+                                    <div key={idx} className="flex justify-between items-center border-b pb-2">
                                         <div>
-                                            <div className="font-medium text-sm sm:text-base">{inv.invoiceNo}</div>
-                                            <div className="text-xs sm:text-sm text-muted-foreground">{inv.partyName}</div>
-                                            <div className="text-[10px] sm:text-xs text-muted-foreground mt-1">{format(parseISO(inv.date), "dd MMM yyyy")}</div>
+                                            <div className="font-medium">{inv.invoiceNo}</div>
+                                            <div className="text-sm text-muted-foreground">{inv.partyName}</div>
+                                            <div className="text-xs text-muted-foreground">{format(parseISO(inv.date), "dd MMM yyyy")}</div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="font-bold text-sm sm:text-base">₹{inv.amount.toFixed(2)}</div>
-                                            <div className="text-[10px] sm:text-xs text-orange-600 font-medium">{inv.status}</div>
+                                            <div className="font-bold">₹{inv.amount.toFixed(2)}</div>
+                                            <div className="text-xs text-orange-600">{inv.status}</div>
                                         </div>
                                     </div>
                                 ))}
@@ -366,14 +366,14 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                         {topDebtors.length > 0 ? (
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {topDebtors.map((debtor, idx) => (
-                                    <div key={idx} className="flex justify-between items-center p-3 border rounded-lg shadow-sm bg-card hover:bg-accent/50 transition-colors">
+                                    <div key={idx} className="flex justify-between items-center border-b pb-2">
                                         <div>
-                                            <div className="font-medium text-sm sm:text-base">{debtor.name}</div>
-                                            <div className="text-xs sm:text-sm text-muted-foreground">Outstanding</div>
+                                            <div className="font-medium">{debtor.name}</div>
+                                            <div className="text-sm text-muted-foreground">Outstanding</div>
                                         </div>
-                                        <div className="font-bold text-sm sm:text-base text-red-600">₹{debtor.amount.toFixed(2)}</div>
+                                        <div className="font-bold text-red-600">₹{debtor.amount.toFixed(2)}</div>
                                     </div>
                                 ))}
                             </div>

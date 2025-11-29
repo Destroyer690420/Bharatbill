@@ -74,32 +74,13 @@ export default function Parties() {
         p.gstin?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    function resetForm() {
-        setFormData({
-            name: "",
-            type: "buyer",
-            gstin: "",
-            state: "",
-            stateCode: "",
-            address: "",
-            shippingAddress: "",
-        });
-        setEditingParty(null);
-    }
-
-    function handleEdit(party) {
-        setFormData(party);
-        setEditingParty(party);
-        setIsDialogOpen(true);
-    }
-
     return (
         <div className="space-y-4 sm:space-y-6">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Parties</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Parties (Ledgers)</h2>
                 <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
                     <DialogTrigger asChild>
-                        <Button size="sm" className="h-9 w-full sm:w-auto"><Plus className="mr-2 h-4 w-4" /> Add Party</Button>
+                        <Button><Plus className="mr-2 h-4 w-4" /> Add Party</Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
@@ -156,19 +137,16 @@ export default function Parties() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                     <Input
                         type="text"
-                        placeholder="Search parties..."
+                        placeholder="Search parties by name or GSTIN..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 w-full"
                     />
                 </div>
             </div>
 
-
-            {/* Wrapped container for both desktop and mobile views */}
             <div className="rounded-md border overflow-hidden">
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
+                <div className="overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -210,53 +188,26 @@ export default function Parties() {
                         </TableBody>
                     </Table>
                 </div>
-
-                {/* Mobile View (Cards) */}
-                <div className="md:hidden space-y-4 p-4 bg-muted/20">
-                    {loading ? (
-                        <div className="text-center py-4">Loading...</div>
-                    ) : filteredParties.length === 0 ? (
-                        <div className="text-center py-4 text-muted-foreground">No parties found</div>
-                    ) : (
-                        filteredParties.map((party) => (
-                            <div key={party.id} className="bg-card border rounded-lg p-4 shadow-sm space-y-3">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <div className="font-bold text-lg">{party.name}</div>
-                                        <div className="text-sm text-muted-foreground capitalize">{party.type}</div>
-                                    </div>
-                                    {party.gstin && (
-                                        <div className="text-xs bg-muted px-2 py-1 rounded">
-                                            {party.gstin}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="text-sm border-t pt-2 mt-2">
-                                    <div className="text-muted-foreground">{party.state}</div>
-                                    <div className="text-muted-foreground truncate">{party.address}</div>
-                                </div>
-
-                                <div className="flex justify-end gap-2 pt-2 border-t mt-2">
-                                    <Link to={`/parties/${party.id}/ledger`}>
-                                        <Button variant="outline" size="sm" className="h-8">
-                                            <FileSpreadsheet className="h-3 w-3 mr-2" />
-                                            Ledger
-                                        </Button>
-                                    </Link>
-                                    <Button variant="outline" size="sm" className="h-8" onClick={() => handleEdit(party)}>
-                                        <Pencil className="h-3 w-3 mr-2" />
-                                        Edit
-                                    </Button>
-                                    <Button variant="outline" size="sm" className="h-8 text-red-500 hover:text-red-600" onClick={() => handleDelete(party.id)}>
-                                        <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
             </div>
         </div>
     );
+
+    function resetForm() {
+        setFormData({
+            name: "",
+            type: "buyer",
+            gstin: "",
+            state: "",
+            stateCode: "",
+            address: "",
+            shippingAddress: "",
+        });
+        setEditingParty(null);
+    }
+
+    function handleEdit(party) {
+        setFormData(party);
+        setEditingParty(party);
+        setIsDialogOpen(true);
+    }
 }

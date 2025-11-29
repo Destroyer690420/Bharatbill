@@ -167,25 +167,22 @@ export default function PartyLedger() {
 
     const grandTotal = Math.max(debitTotalCalc, creditTotalCalc);
 
-    // Combine and sort transactions for Mobile View
-    const allTransactions = [...debits, ...credits].sort((a, b) => new Date(a.date) - new Date(b.date));
-
     return (
         <div className="space-y-6 pb-20">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
                     <Link to="/parties">
                         <Button variant="outline" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
                     </Link>
-                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Party Ledger</h2>
+                    <h2 className="text-3xl font-bold tracking-tight">Party Ledger</h2>
                 </div>
-                <Button onClick={handleDownloadPDF} className="w-full sm:w-auto"><Download className="mr-2 h-4 w-4" /> Download PDF</Button>
+                <Button onClick={handleDownloadPDF}><Download className="mr-2 h-4 w-4" /> Download PDF</Button>
             </div>
 
             <Card>
                 <CardHeader><CardTitle>Filter Options</CardTitle></CardHeader>
-                <CardContent className="flex flex-col sm:flex-row gap-4 items-end">
-                    <div className="space-y-2 w-full sm:w-auto">
+                <CardContent className="flex gap-4 items-end">
+                    <div className="space-y-2">
                         <Label>Start Date</Label>
                         <Input
                             type="date"
@@ -194,7 +191,7 @@ export default function PartyLedger() {
                             style={{ colorScheme: 'dark' }}
                         />
                     </div>
-                    <div className="space-y-2 w-full sm:w-auto">
+                    <div className="space-y-2">
                         <Label>End Date</Label>
                         <Input
                             type="date"
@@ -206,7 +203,7 @@ export default function PartyLedger() {
                 </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-4">
                 <Card>
                     <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Opening Balance</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">₹{Math.abs(openingBalance).toFixed(2)} {openingBalance >= 0 ? "Dr" : "Cr"}</div></CardContent>
@@ -217,37 +214,8 @@ export default function PartyLedger() {
                 </Card>
             </div>
 
-            {/* Mobile Transaction List View */}
-            <div className="md:hidden space-y-4">
-                <h3 className="font-bold text-lg">Transactions</h3>
-                {allTransactions.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">No transactions in this period</div>
-                ) : (
-                    allTransactions.map((tx, i) => (
-                        <Card key={i} className="overflow-hidden">
-                            <CardContent className="p-4 space-y-2">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <div className="font-bold">{format(parseISO(tx.date), "dd MMM yyyy")}</div>
-                                        <div className="text-sm text-muted-foreground">{tx.type} - {tx.refNo}</div>
-                                    </div>
-                                    <div className={`font-bold ${tx.type === 'Sales' ? 'text-red-600' : 'text-green-600'}`}>
-                                        {tx.type === 'Sales' ? "Dr" : "Cr"} ₹{tx.amount.toFixed(2)}
-                                    </div>
-                                </div>
-                                {tx.description && (
-                                    <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                                        {tx.description}
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    ))
-                )}
-            </div>
-
-            {/* PDF Container - Preview (Desktop Only) */}
-            <div className="hidden md:flex justify-center bg-muted p-8 overflow-auto">
+            {/* PDF Container - Preview */}
+            <div className="flex justify-center bg-muted p-8 overflow-auto">
                 <div className="shadow-lg">
                     <div ref={pdfRef} className="p-4 text-xs font-sans text-black bg-white" style={{ width: '190mm', minHeight: '277mm' }}>
 

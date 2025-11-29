@@ -64,8 +64,7 @@ export default function Quotations() {
             </div>
 
             <div className="rounded-md border overflow-hidden">
-                {/* Desktop View */}
-                <div className="hidden md:block overflow-x-auto">
+                <div className="overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -117,58 +116,6 @@ export default function Quotations() {
                             )}
                         </TableBody>
                     </Table>
-                </div>
-
-                {/* Mobile View (Cards) */}
-                <div className="md:hidden space-y-4 p-4 bg-muted/20">
-                    {loading ? (
-                        <div className="text-center py-4">Loading...</div>
-                    ) : quotations.length === 0 ? (
-                        <div className="text-center py-4 text-muted-foreground">No quotations found</div>
-                    ) : (
-                        quotations.map((quotation) => {
-                            const docType = quotation.documentType || "Quotation";
-                            return (
-                                <div key={quotation.id} className="bg-card border rounded-lg p-4 shadow-sm space-y-3">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <div className="font-bold text-lg">{quotation.invoiceNo}</div>
-                                            <Badge className={`mt-1 ${getDocumentTypeBadgeColor(docType)}`}>
-                                                {docType === "Quotation" ? "Quotation" : "Proforma"}
-                                            </Badge>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="font-bold text-lg">₹{quotation.grandTotal?.toFixed(2)}</div>
-                                            <div className="text-xs text-muted-foreground">{quotation.date ? format(new Date(quotation.date), "dd MMM yyyy") : "N/A"}</div>
-                                        </div>
-                                    </div>
-
-                                    <div className="text-sm border-t pt-2 mt-2">
-                                        <div className="font-medium">Buyer:</div>
-                                        <div className="text-muted-foreground">{quotation.buyerDetails?.name || "N/A"}</div>
-                                    </div>
-
-                                    <div className="flex justify-end gap-2 pt-2 border-t mt-2">
-                                        <Link to={`/quotations/${quotation.id}`}>
-                                            <Button variant="outline" size="sm" className="h-8">
-                                                <Eye className="h-3 w-3 mr-2" />
-                                                View
-                                            </Button>
-                                        </Link>
-                                        <Link to={`/invoices/${quotation.id}/print`}>
-                                            <Button variant="outline" size="sm" className="h-8">
-                                                <Printer className="h-3 w-3 mr-2" />
-                                                Print
-                                            </Button>
-                                        </Link>
-                                        <Button variant="outline" size="sm" className="h-8 text-red-500 hover:text-red-600" onClick={() => handleDelete(quotation.id)}>
-                                            <Trash2 className="h-3 w-3" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            );
-                        })
-                    )}
                 </div>
             </div>
         </div>

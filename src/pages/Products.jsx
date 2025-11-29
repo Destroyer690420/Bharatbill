@@ -170,85 +170,44 @@ export default function Products() {
                 />
             </div>
 
-            <div className="rounded-md border overflow-hidden">
-                {/* Desktop View */}
-                <div className="hidden md:block overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>HSN</TableHead>
-                                <TableHead>Unit</TableHead>
-                                <TableHead>Rate</TableHead>
-                                <TableHead>Tax %</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loading ? (
-                                <TableRow><TableCell colSpan={6} className="text-center">Loading...</TableCell></TableRow>
-                            ) : filteredProducts.length === 0 ? (
-                                <TableRow><TableCell colSpan={6} className="text-center">No products found</TableCell></TableRow>
-                            ) : (
-                                filteredProducts.map((product) => (
-                                    <TableRow key={product.id}>
-                                        <TableCell className="font-medium">{product.name}</TableCell>
-                                        <TableCell>{product.hsnCode}</TableCell>
-                                        <TableCell>{product.unit}</TableCell>
-                                        <TableCell>{product.defaultRate}</TableCell>
-                                        <TableCell>{product.taxRate}%</TableCell>
-                                        <TableCell className="text-right space-x-2">
-                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(product.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {/* Mobile View (Cards) */}
-                <div className="md:hidden space-y-4 p-4 bg-muted/20">
-                    {loading ? (
-                        <div className="text-center py-4">Loading...</div>
-                    ) : filteredProducts.length === 0 ? (
-                        <div className="text-center py-4 text-muted-foreground">No products found</div>
-                    ) : (
-                        filteredProducts.map((product) => (
-                            <div key={product.id} className="bg-card border rounded-lg p-4 shadow-sm space-y-3">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <div className="font-bold text-lg">{product.name}</div>
-                                        <div className="text-sm text-muted-foreground">HSN: {product.hsnCode || "N/A"}</div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="font-bold">₹{product.defaultRate}</div>
-                                        <div className="text-xs text-muted-foreground">per {product.unit}</div>
-                                    </div>
-                                </div>
-
-                                <div className="text-sm flex justify-between items-center text-muted-foreground">
-                                    <div>Tax: {product.taxRate}%</div>
-                                </div>
-
-                                <div className="flex justify-end gap-2 pt-2 border-t">
-                                    <Button variant="outline" size="sm" className="h-8" onClick={() => handleEdit(product)}>
-                                        <Pencil className="h-3 w-3 mr-2" />
-                                        Edit
-                                    </Button>
-                                    <Button variant="outline" size="sm" className="h-8 text-red-500 hover:text-red-600" onClick={() => handleDelete(product.id)}>
-                                        <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
+            <div className="rounded-md border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>HSN</TableHead>
+                            <TableHead>Unit</TableHead>
+                            <TableHead>Rate</TableHead>
+                            <TableHead>Tax %</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading ? (
+                            <TableRow><TableCell colSpan={6} className="text-center">Loading...</TableCell></TableRow>
+                        ) : filteredProducts.length === 0 ? (
+                            <TableRow><TableCell colSpan={6} className="text-center">No products found</TableCell></TableRow>
+                        ) : (
+                            filteredProducts.map((product) => (
+                                <TableRow key={product.id}>
+                                    <TableCell className="font-medium">{product.name}</TableCell>
+                                    <TableCell>{product.hsnCode}</TableCell>
+                                    <TableCell>{product.unit}</TableCell>
+                                    <TableCell>{product.defaultRate}</TableCell>
+                                    <TableCell>{product.taxRate}%</TableCell>
+                                    <TableCell className="text-right space-x-2">
+                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(product.id)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
             </div>
         </div>
     );
