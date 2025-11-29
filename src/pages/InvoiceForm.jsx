@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, doc, getDoc, getDocs, query, orderBy, updateDoc } from "firebase/firestore";
 import { useNavigate, useParams } from "react-router-dom";
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,15 +45,27 @@ export default function InvoiceForm() {
         }
     });
 
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "items"
-    });
+    // Use standard React state for items instead of useFieldArray
+    const [items, setItems] = useState([{ description: "", hsnCode: "", qty: 1, rate: 0, per: "Pcs" }]);
 
-    const watchItems = useWatch({
-        control,
-        name: "items",
-    });
+    // Handler for item field changes
+    const handleItemChange = (index, field, value) => {
+        const newItems = [...items];
+        newItems[index] = { ...newItems[index], [field]: value };
+        setItems(newItems);
+    };
+
+    // Add new item
+    const addItem = () => {
+        setItems([...items, { description: "", hsnCode: "", qty: 1, rate: 0, per: "Pcs" }]);
+    };
+
+    // Remove item
+    const removeItem = (index) => {
+        if (items.length > 1) {
+            setItems(items.filter((_, i) => i !== index));
+        }
+    };
 
     // Fetch Parties and Products
     useEffect(() => {
@@ -144,8 +156,14 @@ export default function InvoiceForm() {
                 const data = docSnap.data();
                 // Reset form with data
                 Object.keys(data).forEach(key => {
-                    setValue(key, data[key]);
+                    if (key !== 'items') { // Skip items, we'll handle separately
+                        setValue(key, data[key]);
+                    }
                 });
+                // Load items into state
+                if (data.items && data.items.length > 0) {
+                    setItems(data.items);
+                }
             }
         };
 
@@ -182,7 +200,7 @@ export default function InvoiceForm() {
         return { subTotal, totalQty };
     };
 
-    const { subTotal, totalQty } = calculateTotals(watchItems || []);
+    const { subTotal, totalQty } = calculateTotals(items || []);
     const freightCharges = parseFloat(watch("freightCharges") || 0);
     const taxableValue = subTotal + freightCharges;
 
@@ -210,6 +228,7 @@ export default function InvoiceForm() {
 
             const invoiceData = {
                 ...data,
+                items, // Add items from state
                 buyerDetails, // Snapshot
                 consigneeDetails, // Snapshot
                 subTotal,
@@ -258,10 +277,15 @@ export default function InvoiceForm() {
 
     // Handle product selection from suggestions
     const handleProductSelect = (index, product) => {
-        setValue(`items.${index}.description`, product.name + (product.description ? `\n${product.description}` : ""));
-        setValue(`items.${index}.hsnCode`, product.hsnCode);
-        setValue(`items.${index}.rate`, product.defaultRate);
-        setValue(`items.${index}.per`, product.unit);
+        const newItems = [...items];
+        newItems[index] = {
+            ...newItems[index],
+            description: product.name + (product.description ? `\n${product.description}` : ""),
+            hsnCode: product.hsnCode,
+            rate: product.defaultRate,
+            per: product.unit
+        };
+        setItems(newItems);
         setProductSearch(prev => ({ ...prev, [index]: product.name }));
         setShowSuggestions(prev => ({ ...prev, [index]: false }));
     };
@@ -337,10 +361,10 @@ export default function InvoiceForm() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {fields.map((field, index) => (
-                                        <TableRow key={field.id}>
+                                    {items.map((item, index) => (
+                                        <TableRow key={index}>
                                             <TableCell>
-                                                <div className="relative mb-2">
+                                                <div className="mb-2">
                                                     <Input
                                                         placeholder="Search product..."
                                                         value={productSearch[index] || ""}
@@ -356,6 +380,7 @@ export default function InvoiceForm() {
                                                             }, 200);
                                                         }}
                                                         className="w-full"
+                                                        style={{ pointerEvents: 'auto' }}
                                                     />
                                                     {showSuggestions[index] && getFilteredProducts(index).length > 0 && (
                                                         <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
@@ -374,17 +399,55 @@ export default function InvoiceForm() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                <Textarea {...register(`items.${index}.description`)} placeholder="Description" className="min-h-[60px]" />
+                                                <Textarea
+                                                    value={item.description}
+                                                    onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                                                    placeholder="Description"
+                                                    className="min-h-[60px]"
+                                                    style={{ pointerEvents: 'auto' }}
+                                                />
                                             </TableCell>
-                                            <TableCell><Input {...register(`items.${index}.hsnCode`)} className="w-20" /></TableCell>
-                                            <TableCell><Input type="number" {...register(`items.${index}.qty`)} className="w-20" /></TableCell>
-                                            <TableCell><Input type="number" {...register(`items.${index}.rate`)} className="w-24" /></TableCell>
-                                            <TableCell><Input {...register(`items.${index}.per`)} className="w-16" /></TableCell>
                                             <TableCell>
-                                                {((parseFloat(watchItems[index]?.qty || 0) * parseFloat(watchItems[index]?.rate || 0))).toFixed(2)}
+                                                <Input
+                                                    value={item.hsnCode}
+                                                    onChange={(e) => handleItemChange(index, 'hsnCode', e.target.value)}
+                                                    className="w-20"
+                                                    style={{ pointerEvents: 'auto' }}
+                                                />
                                             </TableCell>
                                             <TableCell>
-                                                <Button variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                                                <Input
+                                                    type="number"
+                                                    value={item.qty}
+                                                    onChange={(e) => handleItemChange(index, 'qty', e.target.value)}
+                                                    className="w-20"
+                                                    style={{ pointerEvents: 'auto' }}
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    type="number"
+                                                    value={item.rate}
+                                                    onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
+                                                    className="w-24"
+                                                    style={{ pointerEvents: 'auto' }}
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    value={item.per}
+                                                    onChange={(e) => handleItemChange(index, 'per', e.target.value)}
+                                                    className="w-16"
+                                                    style={{ pointerEvents: 'auto' }}
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                {((parseFloat(item.qty || 0) * parseFloat(item.rate || 0))).toFixed(2)}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button variant="ghost" size="icon" onClick={() => removeItem(index)}>
+                                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                                </Button>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -394,11 +457,11 @@ export default function InvoiceForm() {
 
                         {/* Mobile Card View */}
                         <div className="md:hidden space-y-6">
-                            {fields.map((field, index) => (
-                                <div key={field.id} className="bg-muted/30 p-4 rounded-lg border space-y-4">
+                            {items.map((item, index) => (
+                                <div key={index} className="bg-muted/30 p-4 rounded-lg border space-y-4">
                                     <div className="flex justify-between items-center">
                                         <h4 className="font-medium text-sm text-muted-foreground">Item #{index + 1}</h4>
-                                        <Button variant="ghost" size="sm" onClick={() => remove(index)} className="h-8 w-8 p-0 text-red-500">
+                                        <Button variant="ghost" size="sm" onClick={() => removeItem(index)} className="h-8 w-8 p-0 text-red-500">
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
                                     </div>
@@ -443,33 +506,54 @@ export default function InvoiceForm() {
 
                                         <div className="space-y-2">
                                             <Label>Description</Label>
-                                            <Textarea {...register(`items.${index}.description`)} placeholder="Item description" className="min-h-[80px]" />
+                                            <Textarea
+                                                value={item.description}
+                                                onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                                                placeholder="Item description"
+                                                className="min-h-[80px]"
+                                            />
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
                                                 <Label>HSN Code</Label>
-                                                <Input {...register(`items.${index}.hsnCode`)} placeholder="HSN" />
+                                                <Input
+                                                    value={item.hsnCode}
+                                                    onChange={(e) => handleItemChange(index, 'hsnCode', e.target.value)}
+                                                    placeholder="HSN"
+                                                />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label>Unit</Label>
-                                                <Input {...register(`items.${index}.per`)} placeholder="Pcs, Kg..." />
+                                                <Input
+                                                    value={item.per}
+                                                    onChange={(e) => handleItemChange(index, 'per', e.target.value)}
+                                                    placeholder="Pcs, Kg..."
+                                                />
                                             </div>
                                         </div>
 
                                         <div className="grid grid-cols-3 gap-3">
                                             <div className="space-y-2">
                                                 <Label>Qty</Label>
-                                                <Input type="number" {...register(`items.${index}.qty`)} />
+                                                <Input
+                                                    type="number"
+                                                    value={item.qty}
+                                                    onChange={(e) => handleItemChange(index, 'qty', e.target.value)}
+                                                />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label>Rate</Label>
-                                                <Input type="number" {...register(`items.${index}.rate`)} />
+                                                <Input
+                                                    type="number"
+                                                    value={item.rate}
+                                                    onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
+                                                />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label>Amount</Label>
                                                 <div className="flex items-center h-10 px-3 border rounded-md bg-muted/50 font-medium">
-                                                    {((parseFloat(watchItems[index]?.qty || 0) * parseFloat(watchItems[index]?.rate || 0))).toFixed(2)}
+                                                    {((parseFloat(item.qty || 0) * parseFloat(item.rate || 0))).toFixed(2)}
                                                 </div>
                                             </div>
                                         </div>
@@ -478,7 +562,7 @@ export default function InvoiceForm() {
                             ))}
                         </div>
 
-                        <Button type="button" variant="outline" className="w-full md:w-auto mt-4" onClick={() => append({ description: "", hsnCode: "", qty: 1, rate: 0, per: "Pcs", amount: 0 })}>
+                        <Button type="button" variant="outline" className="w-full md:w-auto mt-4" onClick={addItem}>
                             <Plus className="mr-2 h-4 w-4" /> Add Item
                         </Button>
                     </CardContent>
