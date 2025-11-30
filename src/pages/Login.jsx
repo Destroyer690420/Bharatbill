@@ -88,7 +88,7 @@ export default function Login() {
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
             <Card className="w-full max-w-md">
                 <CardHeader>
-                    <CardTitle className="text-2xl text-center">Welcome to Lekha</CardTitle>
+                    <CardTitle className="text-2xl text-center">Welcome to Bharat Bill</CardTitle>
                     <CardDescription className="text-center">Sign in to access your accounting data from any device</CardDescription>
                 </CardHeader>
                 <CardContent>

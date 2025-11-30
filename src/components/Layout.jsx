@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, Package, FileText, LogOut, Settings, CreditCard, Menu, X, FileSpreadsheet } from "lucide-react";
+import { LayoutDashboard, Users, Package, FileText, LogOut, Settings, CreditCard, Menu, X, FileSpreadsheet, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -18,6 +18,7 @@ export default function Layout({ children }) {
         { href: "/parties", label: "Parties", icon: Users },
         { href: "/products", label: "Products", icon: Package },
         { href: "/settings", label: "Settings", icon: Settings },
+        { href: "/about", label: "About Us", icon: Info },
     ];
 
     const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -33,7 +34,7 @@ export default function Layout({ children }) {
                 >
                     {mobileMenuOpen ? <X className="h-6 w-6 text-foreground" /> : <Menu className="h-6 w-6 text-foreground" />}
                 </button>
-                <h1 className="text-xl font-bold text-foreground ml-4">Lekha</h1>
+                <h1 className="text-xl font-bold text-foreground ml-4">Bharat Bill</h1>
             </div>
 
             {/* Overlay for mobile */}
@@ -53,7 +54,7 @@ export default function Layout({ children }) {
                 )}
             >
                 <div className="p-6 border-b border-border">
-                    <h1 className="text-2xl font-bold text-foreground">Lekha</h1>
+                    <h1 className="text-2xl font-bold text-foreground">Bharat Bill</h1>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-1 overflow-y-auto">

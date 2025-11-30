@@ -18,6 +18,7 @@ import Settings from "@/pages/Settings";
 import Payments from "@/pages/Payments";
 import PaymentForm from "@/pages/PaymentForm";
 import PartyLedger from "@/pages/PartyLedger";
+import AboutUs from "@/pages/AboutUs";
 
 function App() {
   return (
@@ -158,6 +159,13 @@ function App() {
             <PrivateRoute>
               <Layout>
                 <PaymentForm />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/about" element={
+            <PrivateRoute>
+              <Layout>
+                <AboutUs />
               </Layout>
             </PrivateRoute>
           } />
