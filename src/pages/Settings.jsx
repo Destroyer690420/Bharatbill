@@ -21,6 +21,7 @@ export default function Settings() {
         companyName: "",
         address: "",
         gstin: "",
+        invoicePrefix: "",
         state: "",
         stateCode: "",
         bankName: "",
@@ -140,7 +141,7 @@ export default function Settings() {
                     {success && <Alert className="mb-4 border-green-500 text-green-700 bg-green-50"><CheckCircle2 className="h-4 w-4 mr-2" /><AlertDescription>{success}</AlertDescription></Alert>}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="companyName">Company Name</Label>
                                 <Input id="companyName" required value={formData.companyName} onChange={handleChange} />
@@ -148,6 +149,10 @@ export default function Settings() {
                             <div className="space-y-2">
                                 <Label htmlFor="gstin">GSTIN</Label>
                                 <Input id="gstin" required value={formData.gstin} onChange={handleChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="invoicePrefix">Invoice Prefix</Label>
+                                <Input id="invoicePrefix" value={formData.invoicePrefix} onChange={handleChange} placeholder="e.g. INV" />
                             </div>
                         </div>
 

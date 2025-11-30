@@ -85,12 +85,18 @@ export default function InvoiceForm() {
             const taxInvoices = invoices.filter(inv => inv.documentType === "Tax Invoice");
 
             let nextNumber = 1;
-            const prefix = "NFI/2025-26/";
+            const userPrefix = currentUser?.profile?.companyProfile?.invoicePrefix || "INV";
+            const prefix = `${userPrefix}/2025-26/`;
 
             // Extract numbers from existing tax invoices
+            // We need to be careful with regex as the prefix might contain special characters
+            // Escaping special characters in userPrefix for regex
+            const escapedPrefix = userPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`${escapedPrefix}/2025-26/(\\d+)`);
+
             const numbers = taxInvoices
                 .map(inv => {
-                    const match = inv.invoiceNo?.match(/NFI\/2025-26\/(\d+)/);
+                    const match = inv.invoiceNo?.match(regex);
                     return match ? parseInt(match[1]) : 0;
                 })
                 .filter(n => n > 0);
@@ -252,7 +258,7 @@ export default function InvoiceForm() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label>Invoice No</Label>
-                            <Input {...register("invoiceNo")} placeholder="e.g. NFI/2025-26/1" required />
+                            <Input {...register("invoiceNo")} placeholder="e.g. INV/2025-26/1" required />
                         </div>
                         <div className="space-y-2">
                             <Label>Date</Label>
