@@ -53,7 +53,7 @@ export default function Onboarding() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 p-8 flex justify-center">
+        <div className="min-h-screen bg-background p-8 flex justify-center">
             <Card className="w-full max-w-2xl h-fit">
                 <CardHeader>
                     <CardTitle>Setup Company Profile</CardTitle>
