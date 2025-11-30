@@ -88,7 +88,7 @@ export default function PaymentForm() {
                 <Card>
                     <CardHeader><CardTitle>Payment Details</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Date</Label>
                                 <Input
@@ -117,7 +117,7 @@ export default function PaymentForm() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Amount (₹)</Label>
                                 <Input

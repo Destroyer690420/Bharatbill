@@ -56,7 +56,7 @@ export default function Invoices() {
 
             <div className="rounded-md border overflow-hidden">
                 <div className="overflow-x-auto">
-                    <Table>
+                    <Table className="min-w-[600px]">
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Invoice No</TableHead>
@@ -78,7 +78,7 @@ export default function Invoices() {
                                         <TableCell>{invoice.date ? format(new Date(invoice.date), "dd/MM/yyyy") : "N/A"}</TableCell>
                                         <TableCell>{invoice.buyerDetails?.name || "N/A"}</TableCell>
                                         <TableCell>₹{invoice.grandTotal?.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right space-x-2">
+                                        <TableCell className="text-right space-x-2 whitespace-nowrap">
                                             <Link to={`/invoices/${invoice.id}`}>
                                                 <Button variant="ghost" size="icon">
                                                     <Eye className="h-4 w-4" />

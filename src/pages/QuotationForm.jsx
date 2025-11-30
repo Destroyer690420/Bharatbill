@@ -317,72 +317,159 @@ export default function QuotationForm() {
                 <Card>
                     <CardHeader><CardTitle>Items</CardTitle></CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[300px]">Description</TableHead>
-                                    <TableHead>HSN</TableHead>
-                                    <TableHead>Qty</TableHead>
-                                    <TableHead>Rate</TableHead>
-                                    <TableHead>Per</TableHead>
-                                    <TableHead className="w-[120px]">Amount</TableHead>
-                                    <TableHead></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {fields.map((field, index) => (
-                                    <TableRow key={field.id}>
-                                        <TableCell>
-                                            <div className="relative mb-2">
-                                                <Input
-                                                    placeholder="Search product..."
-                                                    value={productSearch[index] || ""}
-                                                    onChange={(e) => handleProductSearch(index, e.target.value)}
-                                                    onFocus={() => {
-                                                        if (productSearch[index]?.trim()) {
-                                                            setShowSuggestions(prev => ({ ...prev, [index]: true }));
-                                                        }
-                                                    }}
-                                                    onBlur={() => {
-                                                        setTimeout(() => {
-                                                            setShowSuggestions(prev => ({ ...prev, [index]: false }));
-                                                        }, 200);
-                                                    }}
-                                                    className="w-full"
-                                                />
-                                                {showSuggestions[index] && getFilteredProducts(index).length > 0 && (
-                                                    <div className="absolute z-50 w-full mt-1 bg-black border border-[#2F3336] rounded-md shadow-lg max-h-60 overflow-auto">
-                                                        {getFilteredProducts(index).map((product) => (
-                                                            <div
-                                                                key={product.id}
-                                                                className="px-3 py-2 hover:bg-[#16181C] cursor-pointer text-sm border-b border-[#2F3336] last:border-b-0"
-                                                                onMouseDown={() => handleProductSelect(index, product)}
-                                                            >
-                                                                <div className="font-medium text-[#E7E9EA]">{product.name}</div>
-                                                                <div className="text-xs text-[#71767B]">
-                                                                    HSN: {product.hsnCode} | Rate: ₹{product.defaultRate} | Unit: {product.unit}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <Textarea {...register(`items.${index}.description`)} placeholder="Description" className="min-h-[60px]" />
-                                        </TableCell>
-                                        <TableCell><Input {...register(`items.${index}.hsnCode`)} className="w-20" /></TableCell>
-                                        <TableCell><Input type="number" {...register(`items.${index}.qty`)} className="w-20" /></TableCell>
-                                        <TableCell><Input type="number" {...register(`items.${index}.rate`)} className="w-24" /></TableCell>
-                                        <TableCell><Input {...register(`items.${index}.per`)} className="w-16" /></TableCell>
-                                        <TableCell>
-                                            {((parseFloat(watchItems[index]?.qty || 0) * parseFloat(watchItems[index]?.rate || 0))).toFixed(2)}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
-                                        </TableCell>
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[300px]">Description</TableHead>
+                                        <TableHead>HSN</TableHead>
+                                        <TableHead>Qty</TableHead>
+                                        <TableHead>Rate</TableHead>
+                                        <TableHead>Per</TableHead>
+                                        <TableHead className="w-[120px]">Amount</TableHead>
+                                        <TableHead></TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {fields.map((field, index) => (
+                                        <TableRow key={field.id}>
+                                            <TableCell>
+                                                <div className="relative mb-2">
+                                                    <Input
+                                                        placeholder="Search product..."
+                                                        value={productSearch[index] || ""}
+                                                        onChange={(e) => handleProductSearch(index, e.target.value)}
+                                                        onFocus={() => {
+                                                            if (productSearch[index]?.trim()) {
+                                                                setShowSuggestions(prev => ({ ...prev, [index]: true }));
+                                                            }
+                                                        }}
+                                                        onBlur={() => {
+                                                            setTimeout(() => {
+                                                                setShowSuggestions(prev => ({ ...prev, [index]: false }));
+                                                            }, 200);
+                                                        }}
+                                                        className="w-full"
+                                                    />
+                                                    {showSuggestions[index] && getFilteredProducts(index).length > 0 && (
+                                                        <div className="absolute z-50 w-full mt-1 bg-black border border-[#2F3336] rounded-md shadow-lg max-h-60 overflow-auto">
+                                                            {getFilteredProducts(index).map((product) => (
+                                                                <div
+                                                                    key={product.id}
+                                                                    className="px-3 py-2 hover:bg-[#16181C] cursor-pointer text-sm border-b border-[#2F3336] last:border-b-0"
+                                                                    onMouseDown={() => handleProductSelect(index, product)}
+                                                                >
+                                                                    <div className="font-medium text-[#E7E9EA]">{product.name}</div>
+                                                                    <div className="text-xs text-[#71767B]">
+                                                                        HSN: {product.hsnCode} | Rate: ₹{product.defaultRate} | Unit: {product.unit}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <Textarea {...register(`items.${index}.description`)} placeholder="Description" className="min-h-[60px]" />
+                                            </TableCell>
+                                            <TableCell><Input {...register(`items.${index}.hsnCode`)} className="w-20" /></TableCell>
+                                            <TableCell><Input type="number" {...register(`items.${index}.qty`)} className="w-20" /></TableCell>
+                                            <TableCell><Input type="number" {...register(`items.${index}.rate`)} className="w-24" /></TableCell>
+                                            <TableCell><Input {...register(`items.${index}.per`)} className="w-16" /></TableCell>
+                                            <TableCell>
+                                                {((parseFloat(watchItems[index]?.qty || 0) * parseFloat(watchItems[index]?.rate || 0))).toFixed(2)}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="md:hidden space-y-4">
+                            {fields.map((field, index) => (
+                                <div key={field.id} className="bg-card border rounded-lg p-4 space-y-4">
+                                    <div className="flex justify-between items-start">
+                                        <h4 className="font-medium text-sm text-muted-foreground">Item {index + 1}</h4>
+                                        <Button variant="ghost" size="icon" onClick={() => remove(index)} className="h-8 w-8 -mr-2 -mt-2">
+                                            <Trash2 className="h-4 w-4 text-red-500" />
+                                        </Button>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label>Product Search</Label>
+                                        <div className="relative">
+                                            <Input
+                                                placeholder="Search product..."
+                                                value={productSearch[index] || ""}
+                                                onChange={(e) => handleProductSearch(index, e.target.value)}
+                                                onFocus={() => {
+                                                    if (productSearch[index]?.trim()) {
+                                                        setShowSuggestions(prev => ({ ...prev, [index]: true }));
+                                                    }
+                                                }}
+                                                onBlur={() => {
+                                                    setTimeout(() => {
+                                                        setShowSuggestions(prev => ({ ...prev, [index]: false }));
+                                                    }, 200);
+                                                }}
+                                            />
+                                            {showSuggestions[index] && getFilteredProducts(index).length > 0 && (
+                                                <div className="absolute z-50 w-full mt-1 bg-black border border-[#2F3336] rounded-md shadow-lg max-h-60 overflow-auto">
+                                                    {getFilteredProducts(index).map((product) => (
+                                                        <div
+                                                            key={product.id}
+                                                            className="px-3 py-2 hover:bg-[#16181C] cursor-pointer text-sm border-b border-[#2F3336] last:border-b-0"
+                                                            onMouseDown={() => handleProductSelect(index, product)}
+                                                        >
+                                                            <div className="font-medium text-[#E7E9EA]">{product.name}</div>
+                                                            <div className="text-xs text-[#71767B]">
+                                                                HSN: {product.hsnCode} | Rate: ₹{product.defaultRate} | Unit: {product.unit}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label>Description</Label>
+                                        <Textarea {...register(`items.${index}.description`)} placeholder="Description" />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>HSN</Label>
+                                            <Input {...register(`items.${index}.hsnCode`)} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Per</Label>
+                                            <Input {...register(`items.${index}.per`)} />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>Qty</Label>
+                                            <Input type="number" {...register(`items.${index}.qty`)} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Rate</Label>
+                                            <Input type="number" {...register(`items.${index}.rate`)} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Amount</Label>
+                                            <div className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                                                {((parseFloat(watchItems[index]?.qty || 0) * parseFloat(watchItems[index]?.rate || 0))).toFixed(2)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                         <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => append({ description: "", hsnCode: "", qty: 1, rate: 0, per: "Pcs", amount: 0 })}>
                             <Plus className="mr-2 h-4 w-4" /> Add Item
                         </Button>
@@ -392,7 +479,7 @@ export default function QuotationForm() {
                 <Card>
                     <CardContent className="pt-6">
                         <div className="flex justify-end space-y-2">
-                            <div className="w-80 space-y-2">
+                            <div className="w-full sm:w-80 space-y-2">
                                 <div className="flex justify-between items-center">
                                     <span>Subtotal:</span>
                                     <span>₹{subTotal.toFixed(2)}</span>

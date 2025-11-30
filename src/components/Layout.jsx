@@ -95,7 +95,7 @@ export default function Layout({ children }) {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 lg:ml-64 pt-16 lg:pt-8 p-4 sm:p-6 lg:p-8 bg-background text-foreground">
+            <main className="flex-1 lg:ml-64 pt-16 lg:pt-0 p-4 lg:p-8 bg-background text-foreground">
                 {children}
             </main>
         </div>

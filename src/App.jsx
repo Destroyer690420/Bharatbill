@@ -6,7 +6,9 @@ import Onboarding from "@/pages/Onboarding";
 import Dashboard from "@/pages/Dashboard";
 import Layout from "@/components/Layout";
 import Parties from "@/pages/Parties";
+import PartyForm from "@/pages/PartyForm";
 import Products from "@/pages/Products";
+import ProductForm from "@/pages/ProductForm";
 import Invoices from "@/pages/Invoices";
 import InvoiceForm from "@/pages/InvoiceForm";
 import Quotations from "@/pages/Quotations";
@@ -42,10 +44,38 @@ function App() {
               </Layout>
             </PrivateRoute>
           } />
+          <Route path="/parties/new" element={
+            <PrivateRoute>
+              <Layout>
+                <PartyForm />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/parties/:id/edit" element={
+            <PrivateRoute>
+              <Layout>
+                <PartyForm />
+              </Layout>
+            </PrivateRoute>
+          } />
           <Route path="/products" element={
             <PrivateRoute>
               <Layout>
                 <Products />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/products/new" element={
+            <PrivateRoute>
+              <Layout>
+                <ProductForm />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/products/:id/edit" element={
+            <PrivateRoute>
+              <Layout>
+                <ProductForm />
               </Layout>
             </PrivateRoute>
           } />
