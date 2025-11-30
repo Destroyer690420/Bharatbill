@@ -9,6 +9,48 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// GST State Code Mapping
+const STATE_CODES = {
+    "01": "Jammu and Kashmir",
+    "02": "Himachal Pradesh",
+    "03": "Punjab",
+    "04": "Chandigarh",
+    "05": "Uttarakhand",
+    "06": "Haryana",
+    "07": "Delhi",
+    "08": "Rajasthan",
+    "09": "Uttar Pradesh",
+    "10": "Bihar",
+    "11": "Sikkim",
+    "12": "Arunachal Pradesh",
+    "13": "Nagaland",
+    "14": "Manipur",
+    "15": "Mizoram",
+    "16": "Tripura",
+    "17": "Meghalaya",
+    "18": "Assam",
+    "19": "West Bengal",
+    "20": "Jharkhand",
+    "21": "Odisha",
+    "22": "Chattisgarh",
+    "23": "Madhya Pradesh",
+    "24": "Gujarat",
+    "26": "Dadra and Nagar Haveli and Daman and Diu",
+    "27": "Maharashtra",
+    "29": "Karnataka",
+    "30": "Goa",
+    "31": "Lakshadweep",
+    "32": "Kerala",
+    "33": "Tamil Nadu",
+    "34": "Puducherry",
+    "35": "Andaman and Nicobar Islands",
+    "36": "Telangana",
+    "37": "Andhra Pradesh",
+    "38": "Ladakh",
+    "97": "Other Territory"
+};
 
 export default function Onboarding() {
     const { currentUser } = useAuth();
@@ -30,6 +72,14 @@ export default function Onboarding() {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
+    };
+
+    const handleStateChange = (stateCode) => {
+        setFormData({
+            ...formData,
+            stateCode: stateCode,
+            state: STATE_CODES[stateCode]
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -80,33 +130,50 @@ export default function Onboarding() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="state">State Name</Label>
-                                <Input id="state" required value={formData.state} onChange={handleChange} placeholder="e.g. Maharashtra" />
+                                <Label>State Name</Label>
+                                <Select onValueChange={handleStateChange} value={formData.stateCode} required>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select your state" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.entries(STATE_CODES).map(([code, name]) => (
+                                            <SelectItem key={code} value={code}>
+                                                {name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="stateCode">State Code</Label>
-                                <Input id="stateCode" required value={formData.stateCode} onChange={handleChange} placeholder="e.g. 27" />
+                                <Input
+                                    id="stateCode"
+                                    value={formData.stateCode}
+                                    disabled
+                                    className="bg-muted cursor-not-allowed"
+                                    placeholder="Auto-filled"
+                                />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <h3 className="font-semibold">Bank Details</h3>
+                            <h3 className="font-semibold">Bank Details <span className="text-sm font-normal text-muted-foreground">(Optional)</span></h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="bankName">Bank Name</Label>
-                                    <Input id="bankName" required value={formData.bankName} onChange={handleChange} />
+                                    <Input id="bankName" value={formData.bankName} onChange={handleChange} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="accountNo">Account No</Label>
-                                    <Input id="accountNo" required value={formData.accountNo} onChange={handleChange} />
+                                    <Input id="accountNo" value={formData.accountNo} onChange={handleChange} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="ifsc">IFSC Code</Label>
-                                    <Input id="ifsc" required value={formData.ifsc} onChange={handleChange} />
+                                    <Input id="ifsc" value={formData.ifsc} onChange={handleChange} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="branch">Branch</Label>
-                                    <Input id="branch" required value={formData.branch} onChange={handleChange} />
+                                    <Input id="branch" value={formData.branch} onChange={handleChange} />
                                 </div>
                             </div>
                         </div>
