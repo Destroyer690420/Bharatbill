@@ -47,7 +47,7 @@ export default function Parties() {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Parties (Ledgers)</h2>
                 <Link to="/parties/new">
-                    <Button><Plus className="mr-2 h-4 w-4" /> Add Party</Button>
+                    <Button className="w-full sm:w-auto"><Plus className="mr-2 h-4 w-4" /> Add Party</Button>
                 </Link>
             </div>
 

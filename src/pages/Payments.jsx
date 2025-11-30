@@ -52,14 +52,17 @@ export default function Payments() {
                 </Link>
             </div>
 
-            <div className="flex items-center space-x-2">
-                <Search className="h-4 w-4 text-slate-500" />
-                <Input
-                    placeholder="Search by party or reference..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="max-w-sm"
-                />
+            <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                    <Input
+                        type="text"
+                        placeholder="Search by party or reference..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 w-full"
+                    />
+                </div>
             </div>
 
             {loading ? (
