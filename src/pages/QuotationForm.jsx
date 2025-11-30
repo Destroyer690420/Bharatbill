@@ -28,6 +28,9 @@ export default function QuotationForm() {
     const [productSearch, setProductSearch] = useState({});
     const [showSuggestions, setShowSuggestions] = useState({});
 
+    // Media query for responsive rendering
+    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
+
     const { register, control, handleSubmit, setValue, watch, formState: { errors } } = useForm({
         defaultValues: {
             documentType: "Quotation",
@@ -71,6 +74,13 @@ export default function QuotationForm() {
 
         fetchData();
     }, [currentUser]);
+
+    // Handle window resize for responsive behavior
+    useEffect(() => {
+        const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     // Auto-generate Invoice Number based on Document Type
     useEffect(() => {
@@ -317,8 +327,8 @@ export default function QuotationForm() {
                 <Card>
                     <CardHeader><CardTitle>Items</CardTitle></CardHeader>
                     <CardContent>
-                        {/* Desktop Table View */}
-                        <div className="hidden md:block">
+                        {isDesktop ? (
+                            // Desktop Table View
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -345,20 +355,27 @@ export default function QuotationForm() {
                                                                 setShowSuggestions(prev => ({ ...prev, [index]: true }));
                                                             }
                                                         }}
-                                                        onBlur={() => {
-                                                            setTimeout(() => {
-                                                                setShowSuggestions(prev => ({ ...prev, [index]: false }));
-                                                            }, 200);
+                                                        onBlur={(e) => {
+                                                            // Only hide suggestions if not clicking on a suggestion
+                                                            const relatedTarget = e.relatedTarget;
+                                                            if (!relatedTarget || !relatedTarget.closest('.product-suggestions')) {
+                                                                setTimeout(() => {
+                                                                    setShowSuggestions(prev => ({ ...prev, [index]: false }));
+                                                                }, 150);
+                                                            }
                                                         }}
                                                         className="w-full"
                                                     />
                                                     {showSuggestions[index] && getFilteredProducts(index).length > 0 && (
-                                                        <div className="absolute z-50 w-full mt-1 bg-black border border-[#2F3336] rounded-md shadow-lg max-h-60 overflow-auto">
+                                                        <div className="product-suggestions absolute z-50 w-full mt-1 bg-black border border-[#2F3336] rounded-md shadow-lg max-h-60 overflow-auto">
                                                             {getFilteredProducts(index).map((product) => (
                                                                 <div
                                                                     key={product.id}
                                                                     className="px-3 py-2 hover:bg-[#16181C] cursor-pointer text-sm border-b border-[#2F3336] last:border-b-0"
-                                                                    onMouseDown={() => handleProductSelect(index, product)}
+                                                                    onMouseDown={(e) => {
+                                                                        e.preventDefault();
+                                                                        handleProductSelect(index, product);
+                                                                    }}
                                                                 >
                                                                     <div className="font-medium text-[#E7E9EA]">{product.name}</div>
                                                                     <div className="text-xs text-[#71767B]">
@@ -385,94 +402,103 @@ export default function QuotationForm() {
                                     ))}
                                 </TableBody>
                             </Table>
-                        </div>
+                        ) : (
+                            // Mobile Card View
+                            <>
+                                <div className="space-y-4">
+                                    {fields.map((field, index) => (
+                                        <div key={field.id} className="bg-card border rounded-lg p-4 space-y-4">
+                                            <div className="flex justify-between items-start">
+                                                <h4 className="font-medium text-sm text-muted-foreground">Item {index + 1}</h4>
+                                                <Button variant="ghost" size="icon" onClick={() => remove(index)} className="h-8 w-8 -mr-2 -mt-2">
+                                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                                </Button>
+                                            </div>
 
-                        {/* Mobile Card View */}
-                        <div className="md:hidden space-y-4">
-                            {fields.map((field, index) => (
-                                <div key={field.id} className="bg-card border rounded-lg p-4 space-y-4">
-                                    <div className="flex justify-between items-start">
-                                        <h4 className="font-medium text-sm text-muted-foreground">Item {index + 1}</h4>
-                                        <Button variant="ghost" size="icon" onClick={() => remove(index)} className="h-8 w-8 -mr-2 -mt-2">
-                                            <Trash2 className="h-4 w-4 text-red-500" />
-                                        </Button>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label>Product Search</Label>
-                                        <div className="relative">
-                                            <Input
-                                                placeholder="Search product..."
-                                                value={productSearch[index] || ""}
-                                                onChange={(e) => handleProductSearch(index, e.target.value)}
-                                                onFocus={() => {
-                                                    if (productSearch[index]?.trim()) {
-                                                        setShowSuggestions(prev => ({ ...prev, [index]: true }));
-                                                    }
-                                                }}
-                                                onBlur={() => {
-                                                    setTimeout(() => {
-                                                        setShowSuggestions(prev => ({ ...prev, [index]: false }));
-                                                    }, 200);
-                                                }}
-                                            />
-                                            {showSuggestions[index] && getFilteredProducts(index).length > 0 && (
-                                                <div className="absolute z-50 w-full mt-1 bg-black border border-[#2F3336] rounded-md shadow-lg max-h-60 overflow-auto">
-                                                    {getFilteredProducts(index).map((product) => (
-                                                        <div
-                                                            key={product.id}
-                                                            className="px-3 py-2 hover:bg-[#16181C] cursor-pointer text-sm border-b border-[#2F3336] last:border-b-0"
-                                                            onMouseDown={() => handleProductSelect(index, product)}
-                                                        >
-                                                            <div className="font-medium text-[#E7E9EA]">{product.name}</div>
-                                                            <div className="text-xs text-[#71767B]">
-                                                                HSN: {product.hsnCode} | Rate: ₹{product.defaultRate} | Unit: {product.unit}
-                                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Product Search</Label>
+                                                <div className="relative">
+                                                    <Input
+                                                        placeholder="Search product..."
+                                                        value={productSearch[index] || ""}
+                                                        onChange={(e) => handleProductSearch(index, e.target.value)}
+                                                        onFocus={() => {
+                                                            if (productSearch[index]?.trim()) {
+                                                                setShowSuggestions(prev => ({ ...prev, [index]: true }));
+                                                            }
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            // Only hide suggestions if not clicking on a suggestion
+                                                            const relatedTarget = e.relatedTarget;
+                                                            if (!relatedTarget || !relatedTarget.closest('.product-suggestions')) {
+                                                                setTimeout(() => {
+                                                                    setShowSuggestions(prev => ({ ...prev, [index]: false }));
+                                                                }, 150);
+                                                            }
+                                                        }}
+                                                    />
+                                                    {showSuggestions[index] && getFilteredProducts(index).length > 0 && (
+                                                        <div className="product-suggestions absolute z-50 w-full mt-1 bg-black border border-[#2F3336] rounded-md shadow-lg max-h-60 overflow-auto">
+                                                            {getFilteredProducts(index).map((product) => (
+                                                                <div
+                                                                    key={product.id}
+                                                                    className="px-3 py-2 hover:bg-[#16181C] cursor-pointer text-sm border-b border-[#2F3336] last:border-b-0"
+                                                                    onMouseDown={(e) => {
+                                                                        e.preventDefault();
+                                                                        handleProductSelect(index, product);
+                                                                    }}
+                                                                >
+                                                                    <div className="font-medium text-[#E7E9EA]">{product.name}</div>
+                                                                    <div className="text-xs text-[#71767B]">
+                                                                        HSN: {product.hsnCode} | Rate: ₹{product.defaultRate} | Unit: {product.unit}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                    ))}
+                                                    )}
                                                 </div>
-                                            )}
-                                        </div>
-                                    </div>
+                                            </div>
 
-                                    <div className="space-y-2">
-                                        <Label>Description</Label>
-                                        <Textarea {...register(`items.${index}.description`)} placeholder="Description" />
-                                    </div>
+                                            <div className="space-y-2">
+                                                <Label>Description</Label>
+                                                <Textarea {...register(`items.${index}.description`)} placeholder="Description" />
+                                            </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label>HSN</Label>
-                                            <Input {...register(`items.${index}.hsnCode`)} />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>Per</Label>
-                                            <Input {...register(`items.${index}.per`)} />
-                                        </div>
-                                    </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label>HSN</Label>
+                                                    <Input {...register(`items.${index}.hsnCode`)} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Per</Label>
+                                                    <Input {...register(`items.${index}.per`)} />
+                                                </div>
+                                            </div>
 
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <div className="space-y-2">
-                                            <Label>Qty</Label>
-                                            <Input type="number" {...register(`items.${index}.qty`)} />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>Rate</Label>
-                                            <Input type="number" {...register(`items.${index}.rate`)} />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>Amount</Label>
-                                            <div className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                                                {((parseFloat(watchItems[index]?.qty || 0) * parseFloat(watchItems[index]?.rate || 0))).toFixed(2)}
+                                            <div className="grid grid-cols-3 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label>Qty</Label>
+                                                    <Input type="number" {...register(`items.${index}.qty`)} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Rate</Label>
+                                                    <Input type="number" {...register(`items.${index}.rate`)} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Amount</Label>
+                                                    <div className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                                                        {((parseFloat(watchItems[index]?.qty || 0) * parseFloat(watchItems[index]?.rate || 0))).toFixed(2)}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                        <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => append({ description: "", hsnCode: "", qty: 1, rate: 0, per: "Pcs", amount: 0 })}>
-                            <Plus className="mr-2 h-4 w-4" /> Add Item
-                        </Button>
+                                <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => append({ description: "", hsnCode: "", qty: 1, rate: 0, per: "Pcs", amount: 0 })}>
+                                    <Plus className="mr-2 h-4 w-4" /> Add Item
+                                </Button>
+                            </>
+                        )}
                     </CardContent>
                 </Card>
 

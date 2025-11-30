@@ -43,11 +43,11 @@ export default function Products() {
     );
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-3xl font-bold tracking-tight">Products (Inventory)</h2>
+        <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Products (Inventory)</h2>
                 <Link to="/products/new">
-                    <Button><Plus className="mr-2 h-4 w-4" /> Add Product</Button>
+                    <Button className="w-full sm:w-auto"><Plus className="mr-2 h-4 w-4" /> Add Product</Button>
                 </Link>
             </div>
 
@@ -61,47 +61,94 @@ export default function Products() {
                 />
             </div>
 
-            <div className="rounded-md border">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>HSN</TableHead>
-                            <TableHead>Unit</TableHead>
-                            <TableHead>Rate</TableHead>
-                            <TableHead>Tax %</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {loading ? (
-                            <TableRow><TableCell colSpan={6} className="text-center">Loading...</TableCell></TableRow>
-                        ) : filteredProducts.length === 0 ? (
-                            <TableRow><TableCell colSpan={6} className="text-center">No products found</TableCell></TableRow>
-                        ) : (
-                            filteredProducts.map((product) => (
-                                <TableRow key={product.id}>
-                                    <TableCell className="font-medium">{product.name}</TableCell>
-                                    <TableCell>{product.hsnCode}</TableCell>
-                                    <TableCell>{product.unit}</TableCell>
-                                    <TableCell>{product.defaultRate}</TableCell>
-                                    <TableCell>{product.taxRate}%</TableCell>
-                                    <TableCell className="text-right space-x-2">
-                                        <Link to={`/products/${product.id}/edit`}>
-                                            <Button variant="ghost" size="icon">
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                        </Link>
-                                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(product.id)}>
-                                            <Trash2 className="h-4 w-4" />
+            {loading ? (
+                <div className="text-center py-8">Loading...</div>
+            ) : filteredProducts.length === 0 ? (
+                <div className="text-center py-8">No products found</div>
+            ) : (
+                <>
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-4">
+                        {filteredProducts.map((product) => (
+                            <div key={product.id} className="bg-card border rounded-lg p-4 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="font-medium text-sm text-muted-foreground">Product Name</div>
+                                        <div className="font-semibold">{product.name}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-medium text-sm text-muted-foreground">Rate</div>
+                                        <div className="font-semibold">₹{product.defaultRate}</div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-3 pt-2 border-t">
+                                    <div>
+                                        <div className="font-medium text-sm text-muted-foreground">HSN</div>
+                                        <div className="truncate">{product.hsnCode || "-"}</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-medium text-sm text-muted-foreground">Unit</div>
+                                        <div>{product.unit}</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-medium text-sm text-muted-foreground">Tax %</div>
+                                        <div>{product.taxRate}%</div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 pt-2 border-t">
+                                    <Link to={`/products/${product.id}/edit`} className="flex-1">
+                                        <Button variant="outline" size="sm" className="w-full">
+                                            <Pencil className="mr-2 h-4 w-4" /> Edit
                                         </Button>
-                                    </TableCell>
+                                    </Link>
+                                    <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(product.id)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>HSN</TableHead>
+                                    <TableHead>Unit</TableHead>
+                                    <TableHead>Rate</TableHead>
+                                    <TableHead>Tax %</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredProducts.map((product) => (
+                                    <TableRow key={product.id}>
+                                        <TableCell className="font-medium">{product.name}</TableCell>
+                                        <TableCell>{product.hsnCode}</TableCell>
+                                        <TableCell>{product.unit}</TableCell>
+                                        <TableCell>{product.defaultRate}</TableCell>
+                                        <TableCell>{product.taxRate}%</TableCell>
+                                        <TableCell className="text-right space-x-2">
+                                            <Link to={`/products/${product.id}/edit`}>
+                                                <Button variant="ghost" size="icon">
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            </Link>
+                                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(product.id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

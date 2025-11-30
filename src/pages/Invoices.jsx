@@ -54,52 +54,100 @@ export default function Invoices() {
                 </Link>
             </div>
 
-            <div className="rounded-md border overflow-hidden">
-                <div className="overflow-x-auto">
-                    <Table className="min-w-[600px]">
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Invoice No</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Buyer</TableHead>
-                                <TableHead>Amount</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loading ? (
-                                <TableRow><TableCell colSpan={5} className="text-center">Loading...</TableCell></TableRow>
-                            ) : invoices.length === 0 ? (
-                                <TableRow><TableCell colSpan={5} className="text-center">No invoices found</TableCell></TableRow>
-                            ) : (
-                                invoices.map((invoice) => (
-                                    <TableRow key={invoice.id}>
-                                        <TableCell className="font-medium">{invoice.invoiceNo}</TableCell>
-                                        <TableCell>{invoice.date ? format(new Date(invoice.date), "dd/MM/yyyy") : "N/A"}</TableCell>
-                                        <TableCell>{invoice.buyerDetails?.name || "N/A"}</TableCell>
-                                        <TableCell>₹{invoice.grandTotal?.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right space-x-2 whitespace-nowrap">
-                                            <Link to={`/invoices/${invoice.id}`}>
-                                                <Button variant="ghost" size="icon">
-                                                    <Eye className="h-4 w-4" />
-                                                </Button>
-                                            </Link>
-                                            <Link to={`/invoices/${invoice.id}/print`}>
-                                                <Button variant="ghost" size="icon">
-                                                    <Printer className="h-4 w-4" />
-                                                </Button>
-                                            </Link>
-                                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(invoice.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
+            {loading ? (
+                <div className="text-center py-8">Loading...</div>
+            ) : invoices.length === 0 ? (
+                <div className="text-center py-8">No invoices found</div>
+            ) : (
+                <>
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-4">
+                        {invoices.map((invoice) => (
+                            <div key={invoice.id} className="bg-card border rounded-lg p-4 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="font-medium text-sm text-muted-foreground">Invoice No</div>
+                                        <div className="font-semibold">{invoice.invoiceNo}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-medium text-sm text-muted-foreground">Amount</div>
+                                        <div className="font-semibold text-lg">₹{invoice.grandTotal?.toFixed(2)}</div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                                    <div>
+                                        <div className="font-medium text-sm text-muted-foreground">Date</div>
+                                        <div>{invoice.date ? format(new Date(invoice.date), "dd/MM/yyyy") : "N/A"}</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-medium text-sm text-muted-foreground">Buyer</div>
+                                        <div className="truncate">{invoice.buyerDetails?.name || "N/A"}</div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 pt-2 border-t">
+                                    <Link to={`/invoices/${invoice.id}`} className="flex-1">
+                                        <Button variant="outline" size="sm" className="w-full">
+                                            <Eye className="mr-2 h-4 w-4" /> View
+                                        </Button>
+                                    </Link>
+                                    <Link to={`/invoices/${invoice.id}/print`} className="flex-1">
+                                        <Button variant="outline" size="sm" className="w-full">
+                                            <Printer className="mr-2 h-4 w-4" /> Print
+                                        </Button>
+                                    </Link>
+                                    <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(invoice.id)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block rounded-md border overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <Table className="min-w-[600px]">
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Invoice No</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Buyer</TableHead>
+                                        <TableHead>Amount</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-            </div>
+                                </TableHeader>
+                                <TableBody>
+                                    {invoices.map((invoice) => (
+                                        <TableRow key={invoice.id}>
+                                            <TableCell className="font-medium">{invoice.invoiceNo}</TableCell>
+                                            <TableCell>{invoice.date ? format(new Date(invoice.date), "dd/MM/yyyy") : "N/A"}</TableCell>
+                                            <TableCell>{invoice.buyerDetails?.name || "N/A"}</TableCell>
+                                            <TableCell>₹{invoice.grandTotal?.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right space-x-2 whitespace-nowrap">
+                                                <Link to={`/invoices/${invoice.id}`}>
+                                                    <Button variant="ghost" size="icon">
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
+                                                <Link to={`/invoices/${invoice.id}/print`}>
+                                                    <Button variant="ghost" size="icon">
+                                                        <Printer className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
+                                                <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(invoice.id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

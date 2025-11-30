@@ -64,52 +64,100 @@ export default function Parties() {
                 </div>
             </div>
 
-            <div className="rounded-md border overflow-hidden">
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>GSTIN</TableHead>
-                                <TableHead>State</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loading ? (
-                                <TableRow><TableCell colSpan={5} className="text-center">Loading...</TableCell></TableRow>
-                            ) : filteredParties.length === 0 ? (
-                                <TableRow><TableCell colSpan={5} className="text-center">No parties found</TableCell></TableRow>
-                            ) : (
-                                filteredParties.map((party) => (
-                                    <TableRow key={party.id}>
-                                        <TableCell className="font-medium">{party.name}</TableCell>
-                                        <TableCell className="capitalize">{party.type}</TableCell>
-                                        <TableCell>{party.gstin}</TableCell>
-                                        <TableCell>{party.state}</TableCell>
-                                        <TableCell className="text-right space-x-2">
-                                            <Link to={`/parties/${party.id}/edit`}>
-                                                <Button variant="ghost" size="icon">
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                            </Link>
-                                            <Link to={`/parties/${party.id}/ledger`}>
-                                                <Button variant="ghost" size="icon" title="View Ledger">
-                                                    <FileSpreadsheet className="h-4 w-4 text-blue-600" />
-                                                </Button>
-                                            </Link>
-                                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(party.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
+            {loading ? (
+                <div className="text-center py-8">Loading...</div>
+            ) : filteredParties.length === 0 ? (
+                <div className="text-center py-8">No parties found</div>
+            ) : (
+                <>
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-4">
+                        {filteredParties.map((party) => (
+                            <div key={party.id} className="bg-card border rounded-lg p-4 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="font-medium text-sm text-muted-foreground">Name</div>
+                                        <div className="font-semibold">{party.name}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-medium text-sm text-muted-foreground">Type</div>
+                                        <div className="capitalize">{party.type}</div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                                    <div>
+                                        <div className="font-medium text-sm text-muted-foreground">GSTIN</div>
+                                        <div className="truncate">{party.gstin || "-"}</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-medium text-sm text-muted-foreground">State</div>
+                                        <div>{party.state || "-"}</div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 pt-2 border-t">
+                                    <Link to={`/parties/${party.id}/edit`} className="flex-1">
+                                        <Button variant="outline" size="sm" className="w-full">
+                                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                                        </Button>
+                                    </Link>
+                                    <Link to={`/parties/${party.id}/ledger`} className="flex-1">
+                                        <Button variant="outline" size="sm" className="w-full">
+                                            <FileSpreadsheet className="mr-2 h-4 w-4 text-blue-600" /> Ledger
+                                        </Button>
+                                    </Link>
+                                    <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(party.id)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block rounded-md border overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Type</TableHead>
+                                        <TableHead>GSTIN</TableHead>
+                                        <TableHead>State</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-            </div>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredParties.map((party) => (
+                                        <TableRow key={party.id}>
+                                            <TableCell className="font-medium">{party.name}</TableCell>
+                                            <TableCell className="capitalize">{party.type}</TableCell>
+                                            <TableCell>{party.gstin}</TableCell>
+                                            <TableCell>{party.state}</TableCell>
+                                            <TableCell className="text-right space-x-2">
+                                                <Link to={`/parties/${party.id}/edit`}>
+                                                    <Button variant="ghost" size="icon">
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
+                                                <Link to={`/parties/${party.id}/ledger`}>
+                                                    <Button variant="ghost" size="icon" title="View Ledger">
+                                                        <FileSpreadsheet className="h-4 w-4 text-blue-600" />
+                                                    </Button>
+                                                </Link>
+                                                <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(party.id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }
