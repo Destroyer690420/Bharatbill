@@ -38,6 +38,8 @@ export default function Login() {
 
     async function handleEmailLogin(e) {
         e.preventDefault();
+        e.stopPropagation();
+        console.log("Login handler called");
 
         if (!loginEmail || !loginPassword) {
             setError("Please fill in all fields");
@@ -57,6 +59,8 @@ export default function Login() {
 
     async function handleEmailSignup(e) {
         e.preventDefault();
+        e.stopPropagation();
+        console.log("Signup handler called");
 
         if (!signupName || !signupEmail || !signupPassword || !confirmPassword) {
             setError("Please fill in all fields");
