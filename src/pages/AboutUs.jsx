@@ -4,22 +4,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 export default function AboutUs() {
     const team = [
         {
-            name: "Daksh Jhangra",
+            name: "Daksh",
             role: "CEO",
-            initials: "DJ",
+            initials: "D",
             description: "Leading the vision and strategy of Bharat Bill."
         },
         {
-            name: "Dakhsay Sachdeva",
+            name: "Dakshay Sachdeva",
             role: "CMO",
             initials: "DS",
             description: "Driving growth and market presence."
         },
         {
             name: "Gaurav",
-            role: "Random Employee",
+            role: "Founder",
             initials: "G",
-            description: "Contributing to the daily operations like Cleaning Floors."
+            description: "Just shows up sometimes"
         }
     ];
 
