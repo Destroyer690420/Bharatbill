@@ -1,17 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, orderBy, deleteDoc, doc, where, limit } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, deleteDoc, doc, where, limit, getDocs } from "firebase/firestore";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Eye, Trash2, Printer } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Eye, Trash2, Printer, FileText, Download } from "lucide-react";
+import { format, startOfMonth, endOfMonth } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import html2pdf from "html2pdf.js";
 
 export default function Invoices() {
     const { currentUser } = useAuth();
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Report Generation State
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [reportData, setReportData] = useState(null);
+    const [generatingReport, setGeneratingReport] = useState(false);
+    const reportRef = useRef();
 
     useEffect(() => {
         if (!currentUser) return;
@@ -45,13 +57,157 @@ export default function Invoices() {
         }
     };
 
+    const handleDownloadReport = async () => {
+        setGeneratingReport(true);
+        try {
+            // Calculate start and end date for the selected month
+            const startDate = new Date(selectedYear, selectedMonth, 1);
+            const endDate = endOfMonth(startDate);
+
+            const startStr = format(startDate, "yyyy-MM-dd");
+            const endStr = format(endDate, "yyyy-MM-dd");
+
+            // Query all Tax Invoices
+            // We filter by date client-side to avoid Firestore index requirements for compound queries
+            const q = query(
+                collection(db, "users", currentUser.uid, "invoices"),
+                where("documentType", "==", "Tax Invoice")
+            );
+
+            const snapshot = await getDocs(q);
+            const allInvoices = snapshot.docs.map(doc => doc.data());
+
+            // Filter by date range
+            const reportInvoices = allInvoices.filter(inv => {
+                return inv.date >= startStr && inv.date <= endStr;
+            });
+
+            // Sort by date ascending
+            reportInvoices.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (reportInvoices.length === 0) {
+                alert("No invoices found for the selected month.");
+                setGeneratingReport(false);
+                return;
+            }
+
+            setReportData({
+                month: format(startDate, "MMMM yyyy"),
+                invoices: reportInvoices,
+                totals: reportInvoices.reduce((acc, inv) => ({
+                    taxable: acc.taxable + (inv.taxableValue || 0),
+                    tax: acc.tax + (inv.totalTax || 0),
+                    total: acc.total + (inv.grandTotal || 0)
+                }), { taxable: 0, tax: 0, total: 0 })
+            });
+
+            // Wait for state update and DOM render
+            setTimeout(() => {
+                try {
+                    const element = reportRef.current;
+                    if (!element) {
+                        throw new Error("Report element not found");
+                    }
+
+                    const opt = {
+                        margin: 5,
+                        filename: `Sales_Register_${format(startDate, "MMM_yyyy")}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2 },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                    };
+
+                    html2pdf().set(opt).from(element).save().then(() => {
+                        setGeneratingReport(false);
+                        setIsReportModalOpen(false);
+                        setReportData(null); // Clear data after generation
+                    }).catch(pdfErr => {
+                        console.error("PDF Generation Error:", pdfErr);
+                        alert("Failed to generate PDF: " + pdfErr.message);
+                        setGeneratingReport(false);
+                    });
+                } catch (innerErr) {
+                    console.error("Error in timeout:", innerErr);
+                    alert("An error occurred while preparing the PDF: " + innerErr.message);
+                    setGeneratingReport(false);
+                }
+            }, 1000); // Increased timeout to ensure rendering
+
+        } catch (err) {
+            console.error("Error fetching data:", err);
+            setGeneratingReport(false);
+            alert("Failed to fetch data: " + err.message);
+        }
+    };
+
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+
     return (
         <div className="space-y-4 sm:space-y-6">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Tax Invoices</h2>
-                <Link to="/invoices/new">
-                    <Button className="w-full sm:w-auto"><Plus className="mr-2 h-4 w-4" /> New Tax Invoice</Button>
-                </Link>
+                <div className="flex gap-2 w-full sm:w-auto">
+                    <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="flex-1 sm:flex-none">
+                                <FileText className="mr-2 h-4 w-4" /> Sales Report
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Download Sales Register</DialogTitle>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Month</Label>
+                                        <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {months.map((month, index) => (
+                                                    <SelectItem key={index} value={index.toString()}>{month}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Year</Label>
+                                        <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {years.map((year) => (
+                                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button onClick={handleDownloadReport} disabled={generatingReport}>
+                                    {generatingReport ? "Generating..." : (
+                                        <>
+                                            <Download className="mr-2 h-4 w-4" /> Download PDF
+                                        </>
+                                    )}
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Link to="/invoices/new" className="flex-1 sm:flex-none">
+                        <Button className="w-full"><Plus className="mr-2 h-4 w-4" /> New Tax Invoice</Button>
+                    </Link>
+                </div>
             </div>
 
             {loading ? (
@@ -148,6 +304,53 @@ export default function Invoices() {
                     </div>
                 </>
             )}
+
+            {/* Hidden Report Container */}
+            <div style={{ position: "absolute", top: "-9999px", left: "-9999px" }}>
+                {reportData && (
+                    <div ref={reportRef} className="p-8 bg-white text-black font-sans" style={{ width: "297mm", minHeight: "210mm" }}>
+                        <div className="mb-6">
+                            <h1 className="text-2xl font-bold text-center mb-2">{currentUser?.profile?.companyProfile?.companyName}</h1>
+                            <h2 className="text-xl font-semibold text-center text-gray-700">Sales Register - {reportData.month}</h2>
+                        </div>
+
+                        <table className="w-full border-collapse text-sm">
+                            <thead>
+                                <tr className="bg-gray-100">
+                                    <th className="border p-2 text-left">Date</th>
+                                    <th className="border p-2 text-left">Invoice No</th>
+                                    <th className="border p-2 text-left">Party Name</th>
+                                    <th className="border p-2 text-left">GSTIN</th>
+                                    <th className="border p-2 text-right">Taxable Amount</th>
+                                    <th className="border p-2 text-right">Tax Amount</th>
+                                    <th className="border p-2 text-right">Grand Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.invoices.map((inv, index) => (
+                                    <tr key={index}>
+                                        <td className="border p-2">{format(new Date(inv.date), "dd/MM/yyyy")}</td>
+                                        <td className="border p-2">{inv.invoiceNo}</td>
+                                        <td className="border p-2">{inv.buyerDetails?.name}</td>
+                                        <td className="border p-2">{inv.buyerDetails?.gstin || "-"}</td>
+                                        <td className="border p-2 text-right">₹{inv.taxableValue?.toFixed(2) || "0.00"}</td>
+                                        <td className="border p-2 text-right">₹{inv.totalTax?.toFixed(2) || "0.00"}</td>
+                                        <td className="border p-2 text-right">₹{inv.grandTotal?.toFixed(2) || "0.00"}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot>
+                                <tr className="font-bold bg-gray-50">
+                                    <td className="border p-2 text-right" colSpan={4}>Total</td>
+                                    <td className="border p-2 text-right">₹{reportData.totals.taxable.toFixed(2)}</td>
+                                    <td className="border p-2 text-right">₹{reportData.totals.tax.toFixed(2)}</td>
+                                    <td className="border p-2 text-right">₹{reportData.totals.total.toFixed(2)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
