@@ -204,9 +204,11 @@ export default function Invoices() {
                         </DialogContent>
                     </Dialog>
 
-                    <Link to="/invoices/new" className="flex-1 sm:flex-none">
-                        <Button className="w-full"><Plus className="mr-2 h-4 w-4" /> New Tax Invoice</Button>
-                    </Link>
+                    <Button asChild className="flex-1 sm:flex-none">
+                        <Link to="/invoices/new">
+                            <Plus className="mr-2 h-4 w-4" /> New Tax Invoice
+                        </Link>
+                    </Button>
                 </div>
             </div>
 
