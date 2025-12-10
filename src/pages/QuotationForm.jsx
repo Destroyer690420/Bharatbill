@@ -494,11 +494,11 @@ export default function QuotationForm() {
                                         </div>
                                     ))}
                                 </div>
-                                <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => append({ description: "", hsnCode: "", qty: 1, rate: 0, per: "Pcs", amount: 0 })}>
-                                    <Plus className="mr-2 h-4 w-4" /> Add Item
-                                </Button>
                             </>
                         )}
+                        <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => append({ description: "", hsnCode: "", qty: 1, rate: 0, per: "Pcs", amount: 0 })}>
+                            <Plus className="mr-2 h-4 w-4" /> Add Item
+                        </Button>
                     </CardContent>
                 </Card>
 
