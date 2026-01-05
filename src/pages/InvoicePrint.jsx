@@ -13,14 +13,28 @@ export default function InvoicePrint() {
     const { currentUser } = useAuth();
     const [invoice, setInvoice] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const pdfRef = useRef();
 
     useEffect(() => {
-        if (!currentUser || !id) return;
+        if (!currentUser || !id) {
+            setLoading(false);
+            return;
+        }
         const fetchInvoice = async () => {
-            const docSnap = await getDoc(doc(db, "users", currentUser.uid, "invoices", id));
-            if (docSnap.exists()) {
-                setInvoice(docSnap.data());
+            try {
+                console.log("Fetching invoice with id:", id);
+                const docSnap = await getDoc(doc(db, "users", currentUser.uid, "invoices", id));
+                if (docSnap.exists()) {
+                    console.log("Invoice data:", docSnap.data());
+                    setInvoice(docSnap.data());
+                } else {
+                    console.log("Invoice document does not exist");
+                    setError("Invoice not found in database");
+                }
+            } catch (err) {
+                console.error("Error fetching invoice:", err);
+                setError("Error loading invoice: " + err.message);
             }
             setLoading(false);
         };
@@ -29,17 +43,15 @@ export default function InvoicePrint() {
 
     useEffect(() => {
         if (!loading && invoice) {
-            document.title = invoice.invoiceNo; // Set title for print filename
+            document.title = invoice.invoiceNo || "Invoice"; // Set title for print filename
         }
     }, [loading, invoice]);
-
-
 
     const handleDownloadPDF = () => {
         const element = pdfRef.current;
         const opt = {
             margin: 0,
-            filename: `${invoice.invoiceNo}.pdf`,
+            filename: `${invoice?.invoiceNo || 'invoice'}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -47,15 +59,84 @@ export default function InvoicePrint() {
         html2pdf().set(opt).from(element).save();
     };
 
-    if (loading) return <div>Loading...</div>;
-    if (!invoice) return <div>Invoice not found</div>;
+    // Error state styles
+    const errorContainerStyle = {
+        padding: '40px',
+        textAlign: 'center',
+        backgroundColor: '#fff',
+        minHeight: '100vh',
+        fontFamily: 'Arial, sans-serif'
+    };
+
+    // Loading state
+    if (loading) {
+        return (
+            <div style={errorContainerStyle}>
+                <h2 style={{ color: '#333' }}>Loading...</h2>
+                <p>Fetching invoice data...</p>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div style={errorContainerStyle}>
+                <h2 style={{ color: '#dc2626' }}>Error</h2>
+                <p style={{ color: '#666' }}>{error}</p>
+                <p style={{ fontSize: '12px', color: '#999' }}>Invoice ID: {id}</p>
+            </div>
+        );
+    }
+
+    // No currentUser
+    if (!currentUser) {
+        return (
+            <div style={errorContainerStyle}>
+                <h2 style={{ color: '#dc2626' }}>Not Authenticated</h2>
+                <p>Please log in to view this invoice.</p>
+            </div>
+        );
+    }
+
+    // No invoice
+    if (!invoice) {
+        return (
+            <div style={errorContainerStyle}>
+                <h2 style={{ color: '#dc2626' }}>Invoice Not Found</h2>
+                <p>The requested invoice could not be found.</p>
+                <p style={{ fontSize: '12px', color: '#999' }}>Invoice ID: {id}</p>
+            </div>
+        );
+    }
+
+    // Check if company profile exists
+    if (!currentUser?.profile?.companyProfile) {
+        return (
+            <div style={errorContainerStyle}>
+                <h2 style={{ color: '#f59e0b' }}>Company Profile Missing</h2>
+                <p>Please complete your company profile in Settings before printing invoices.</p>
+            </div>
+        );
+    }
+
+    // Check if items exist
+    if (!invoice.items || !Array.isArray(invoice.items)) {
+        return (
+            <div style={errorContainerStyle}>
+                <h2 style={{ color: '#dc2626' }}>Invalid Invoice Data</h2>
+                <p>This invoice does not contain any items.</p>
+                <p style={{ fontSize: '12px', color: '#999' }}>Invoice ID: {id}</p>
+            </div>
+        );
+    }
 
     const company = currentUser.profile.companyProfile;
-    const buyer = invoice.buyerDetails;
-    const consignee = invoice.consigneeDetails;
+    const buyer = invoice.buyerDetails || {};
+    const consignee = invoice.consigneeDetails || {};
 
     // Tax Logic
-    const companyStateCode = company.stateCode;
+    const companyStateCode = company.stateCode || "";
     const buyerStateCode = buyer?.state ? buyer.state : "";
 
     const isIntraState = (company.stateCode && buyer.stateCode && company.stateCode === buyer.stateCode) ||
@@ -68,13 +149,13 @@ export default function InvoicePrint() {
     let totalQty = 0;
     let totalTaxable = 0;
 
-    const itemsWithTax = invoice.items.map(item => {
+    const itemsWithTax = (invoice.items || []).map(item => {
         const qty = parseFloat(item.qty) || 0;
         const rate = parseFloat(item.rate) || 0;
         const amount = qty * rate;
 
         totalQty += qty;
-        totalTaxable += amount; // This is actually Item Subtotal now
+        totalTaxable += amount;
 
         return {
             ...item,
@@ -100,7 +181,7 @@ export default function InvoicePrint() {
     const isQuotation = documentType === "Quotation";
 
     // Calculate Valid Until Date (30 days from invoice date for quotations)
-    const validUntilDate = isQuotation ? addDays(new Date(invoice.date), 30) : null;
+    const validUntilDate = isQuotation && invoice.date ? addDays(new Date(invoice.date), 30) : null;
 
     // Determine copy text based on document type
     const getCopyText = (copyNumber) => {
@@ -173,8 +254,8 @@ export default function InvoicePrint() {
                                     <td className="description-cell">{item.description}</td>
                                     <td className="text-center text-sm">{item.hsnCode}</td>
                                     <td className="text-center">{item.qty} {item.per}</td>
-                                    <td className="text-right">₹{item.rate.toFixed(2)}</td>
-                                    <td className="text-right font-semibold">₹{item.amount.toFixed(2)}</td>
+                                    <td className="text-right">₹{parseFloat(item.rate).toFixed(2)}</td>
+                                    <td className="text-right font-semibold">₹{parseFloat(item.amount).toFixed(2)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -352,7 +433,7 @@ export default function InvoicePrint() {
                                     <td className="text-right">{item.rate}</td>
                                     <td className="text-center">{item.per}</td>
                                     <td className="text-right bold">
-                                        <div>{item.amount.toFixed(2)}</div>
+                                        <div>{parseFloat(item.amount).toFixed(2)}</div>
                                     </td>
                                 </tr>
                             ))}
@@ -901,7 +982,7 @@ export default function InvoicePrint() {
                 </div>
             </div>
 
-            <div className="pt-20 bg-muted min-h-screen flex flex-col items-center gap-8 pb-8">
+            <div className="pt-20 min-h-screen flex flex-col items-center gap-8 pb-8" style={{ backgroundColor: '#f5f5f5' }}>
                 <div ref={pdfRef}>
                     {isQuotation ? (
                         // Single page for Quotations/Proforma Invoices
