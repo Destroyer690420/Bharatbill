@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Save } from "lucide-react";
+import { STATE_CODES, getStateCodeByName, getStateNameByCode } from "@/lib/stateCodes";
 
 export default function PartyForm() {
     const { currentUser } = useAuth();
@@ -99,11 +100,42 @@ export default function PartyForm() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="state">State</Label>
-                                <Input id="state" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} />
+                                <Select
+                                    value={formData.stateCode}
+                                    onValueChange={(code) => setFormData({
+                                        ...formData,
+                                        stateCode: code,
+                                        state: getStateNameByCode(code)
+                                    })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select state" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.entries(STATE_CODES).map(([code, name]) => (
+                                            <SelectItem key={code} value={code}>
+                                                {name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="stateCode">State Code</Label>
-                                <Input id="stateCode" value={formData.stateCode} onChange={(e) => setFormData({ ...formData, stateCode: e.target.value })} placeholder="e.g. 08" />
+                                <Input
+                                    id="stateCode"
+                                    value={formData.stateCode}
+                                    onChange={(e) => {
+                                        const code = e.target.value.padStart(2, '0');
+                                        const stateName = getStateNameByCode(code);
+                                        setFormData({
+                                            ...formData,
+                                            stateCode: e.target.value,
+                                            state: stateName || formData.state
+                                        });
+                                    }}
+                                    placeholder="e.g. 08"
+                                />
                             </div>
                         </div>
                         <div className="space-y-2">

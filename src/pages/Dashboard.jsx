@@ -58,9 +58,18 @@ export default function Dashboard() {
     // Calculate Total Receivables
     const totalInvoiceAmount = invoices.reduce((sum, inv) => {
         const items = inv.items || [];
-        const taxable = items.reduce((s, item) => s + (item.qty * item.rate), 0);
-        const tax = taxable * 0.18;
-        return sum + taxable + tax;
+        let invoiceTotal = 0;
+        items.forEach(item => {
+            const amount = (item.qty * item.rate);
+            const itemTaxRate = parseFloat(item.taxRate) || 18; // Default to 18%
+            const tax = amount * (itemTaxRate / 100);
+            invoiceTotal += amount + tax;
+        });
+        // Add freight tax (18% for services)
+        const freightCharges = parseFloat(inv.freightCharges || 0);
+        const freightTax = freightCharges * 0.18;
+        invoiceTotal += freightCharges + freightTax;
+        return sum + invoiceTotal;
     }, 0);
 
     const totalPaymentAmount = payments.reduce((sum, pay) => sum + (parseFloat(pay.amount) || 0), 0);
@@ -78,9 +87,17 @@ export default function Dashboard() {
         })
         .reduce((sum, inv) => {
             const items = inv.items || [];
-            const taxable = items.reduce((s, item) => s + (item.qty * item.rate), 0);
-            const tax = taxable * 0.18;
-            return sum + taxable + tax;
+            let invoiceTotal = 0;
+            items.forEach(item => {
+                const amount = (item.qty * item.rate);
+                const itemTaxRate = parseFloat(item.taxRate) || 18;
+                const tax = amount * (itemTaxRate / 100);
+                invoiceTotal += amount + tax;
+            });
+            const freightCharges = parseFloat(inv.freightCharges || 0);
+            const freightTax = freightCharges * 0.18;
+            invoiceTotal += freightCharges + freightTax;
+            return sum + invoiceTotal;
         }, 0);
 
     // Calculate Monthly Collections (current month payments)
@@ -109,9 +126,17 @@ export default function Dashboard() {
                 })
                 .reduce((sum, inv) => {
                     const items = inv.items || [];
-                    const taxable = items.reduce((s, item) => s + (item.qty * item.rate), 0);
-                    const tax = taxable * 0.18;
-                    return sum + taxable + tax;
+                    let invoiceTotal = 0;
+                    items.forEach(item => {
+                        const amount = (item.qty * item.rate);
+                        const itemTaxRate = parseFloat(item.taxRate) || 18;
+                        const tax = amount * (itemTaxRate / 100);
+                        invoiceTotal += amount + tax;
+                    });
+                    const freightCharges = parseFloat(inv.freightCharges || 0);
+                    const freightTax = freightCharges * 0.18;
+                    invoiceTotal += freightCharges + freightTax;
+                    return sum + invoiceTotal;
                 }, 0);
 
             months.push({
@@ -151,15 +176,22 @@ export default function Dashboard() {
             .slice(0, 5)
             .map(inv => {
                 const items = inv.items || [];
-                const taxable = items.reduce((s, item) => s + (item.qty * item.rate), 0);
-                const tax = taxable * 0.18;
-                const total = taxable + tax;
+                let invoiceTotal = 0;
+                items.forEach(item => {
+                    const amount = (item.qty * item.rate);
+                    const itemTaxRate = parseFloat(item.taxRate) || 18;
+                    const tax = amount * (itemTaxRate / 100);
+                    invoiceTotal += amount + tax;
+                });
+                const freightCharges = parseFloat(inv.freightCharges || 0);
+                const freightTax = freightCharges * 0.18;
+                invoiceTotal += freightCharges + freightTax;
 
                 return {
                     invoiceNo: inv.invoiceNo,
                     partyName: inv.buyerDetails?.name || "N/A",
                     date: inv.date,
-                    amount: total,
+                    amount: invoiceTotal,
                     status: "Pending" // Can be enhanced with payment tracking
                 };
             });
@@ -179,9 +211,17 @@ export default function Dashboard() {
             }
 
             const items = inv.items || [];
-            const taxable = items.reduce((s, item) => s + (item.qty * item.rate), 0);
-            const tax = taxable * 0.18;
-            debtorMap[partyId].amount += taxable + tax;
+            let invoiceTotal = 0;
+            items.forEach(item => {
+                const amount = (item.qty * item.rate);
+                const itemTaxRate = parseFloat(item.taxRate) || 18;
+                const tax = amount * (itemTaxRate / 100);
+                invoiceTotal += amount + tax;
+            });
+            const freightCharges = parseFloat(inv.freightCharges || 0);
+            const freightTax = freightCharges * 0.18;
+            invoiceTotal += freightCharges + freightTax;
+            debtorMap[partyId].amount += invoiceTotal;
         });
 
         // Subtract payment amounts

@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, Moon, Sun } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { STATE_CODES, getStateNameByCode } from "@/lib/stateCodes";
 
 export default function Settings() {
     const { currentUser } = useAuth();
@@ -164,32 +166,68 @@ export default function Settings() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="state">State Name</Label>
-                                <Input id="state" required value={formData.state} onChange={handleChange} placeholder="e.g. Maharashtra" />
+                                <Select
+                                    value={formData.stateCode}
+                                    onValueChange={(code) => {
+                                        setFormData({
+                                            ...formData,
+                                            stateCode: code,
+                                            state: getStateNameByCode(code)
+                                        });
+                                        if (success) setSuccess("");
+                                    }}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select your state" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.entries(STATE_CODES).map(([code, name]) => (
+                                            <SelectItem key={code} value={code}>
+                                                {name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="stateCode">State Code</Label>
-                                <Input id="stateCode" required value={formData.stateCode} onChange={handleChange} placeholder="e.g. 27" />
+                                <Input
+                                    id="stateCode"
+                                    value={formData.stateCode}
+                                    onChange={(e) => {
+                                        const code = e.target.value;
+                                        const paddedCode = code.padStart(2, '0');
+                                        const stateName = getStateNameByCode(paddedCode);
+                                        setFormData({
+                                            ...formData,
+                                            stateCode: code,
+                                            state: stateName || formData.state
+                                        });
+                                        if (success) setSuccess("");
+                                    }}
+                                    placeholder="e.g. 27"
+                                />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <h3 className="font-semibold text-lg pt-4 border-t">Bank Details</h3>
+                            <h3 className="font-semibold text-lg pt-4 border-t">Bank Details <span className="text-sm font-normal text-muted-foreground">(Optional)</span></h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="bankName">Bank Name</Label>
-                                    <Input id="bankName" required value={formData.bankName} onChange={handleChange} />
+                                    <Input id="bankName" value={formData.bankName} onChange={handleChange} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="accountNo">Account No</Label>
-                                    <Input id="accountNo" required value={formData.accountNo} onChange={handleChange} />
+                                    <Input id="accountNo" value={formData.accountNo} onChange={handleChange} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="ifsc">IFSC Code</Label>
-                                    <Input id="ifsc" required value={formData.ifsc} onChange={handleChange} />
+                                    <Input id="ifsc" value={formData.ifsc} onChange={handleChange} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="branch">Branch</Label>
-                                    <Input id="branch" required value={formData.branch} onChange={handleChange} />
+                                    <Input id="branch" value={formData.branch} onChange={handleChange} />
                                 </div>
                             </div>
                         </div>

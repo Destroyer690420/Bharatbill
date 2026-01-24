@@ -44,7 +44,7 @@ export default function InvoiceForm() {
             vehicleNo: "",
             termsOfDelivery: "",
             freightCharges: 0,
-            items: [{ description: "", hsnCode: "", qty: 1, rate: 0, per: "Pcs", amount: 0 }],
+            items: [{ description: "", hsnCode: "", qty: 1, rate: 0, per: "Pcs", amount: 0, taxRate: 18 }],
         }
     });
 
@@ -155,22 +155,24 @@ export default function InvoiceForm() {
     const calculateTotals = (items) => {
         let subTotal = 0;
         let totalQty = 0;
+        let totalItemTax = 0;
 
-        const calculatedItems = items.map(item => {
+        items.forEach(item => {
             const qty = parseFloat(item.qty) || 0;
             const rate = parseFloat(item.rate) || 0;
             const amount = qty * rate;
+            const itemTaxRate = parseFloat(item.taxRate) || 18; // Default to 18% if not set
+            const itemTax = amount * (itemTaxRate / 100);
 
             subTotal += amount;
             totalQty += qty;
-
-            return { ...item, amount };
+            totalItemTax += itemTax;
         });
 
-        return { subTotal, totalQty };
+        return { subTotal, totalQty, totalItemTax };
     };
 
-    const { subTotal, totalQty } = calculateTotals(watchItems || []);
+    const { subTotal, totalQty, totalItemTax } = calculateTotals(watchItems || []);
     const freightCharges = parseFloat(watch("freightCharges") || 0);
     const taxableValue = subTotal + freightCharges;
 
@@ -183,10 +185,11 @@ export default function InvoiceForm() {
     // For MVP, let's just assume if strings match, it's intra-state.
 
     const isInterState = companyStateCode && buyerStateCode && companyStateCode.toLowerCase() !== buyerStateCode.toLowerCase();
-    const taxRate = 18; // Default 18% for now, or fetch from items (complex)
 
-    // Tax is calculated on (Item Subtotal + Freight)
-    const totalTax = taxableValue * (taxRate / 100);
+    // Tax on freight charges (use 18% for freight as it's a service)
+    const freightTax = freightCharges * 0.18;
+    // Total tax is item-level tax + freight tax
+    const totalTax = totalItemTax + freightTax;
     const grandTotal = taxableValue + totalTax;
 
     const onSubmit = async (data) => {
@@ -250,6 +253,7 @@ export default function InvoiceForm() {
         setValue(`items.${index}.hsnCode`, product.hsnCode);
         setValue(`items.${index}.rate`, product.defaultRate);
         setValue(`items.${index}.per`, product.unit);
+        setValue(`items.${index}.taxRate`, product.taxRate || 18); // Store product's tax rate
         setProductSearch(prev => ({ ...prev, [index]: product.name }));
         setShowSuggestions(prev => ({ ...prev, [index]: false }));
     };
@@ -367,6 +371,7 @@ export default function InvoiceForm() {
                                             <TableCell><Input type="number" {...register(`items.${index}.qty`)} className="w-20" /></TableCell>
                                             <TableCell><Input type="number" {...register(`items.${index}.rate`)} className="w-24" /></TableCell>
                                             <TableCell><Input {...register(`items.${index}.per`)} className="w-16" /></TableCell>
+                                            <input type="hidden" {...register(`items.${index}.taxRate`)} />
                                             <TableCell>
                                                 {((parseFloat(watchItems[index]?.qty || 0) * parseFloat(watchItems[index]?.rate || 0))).toFixed(2)}
                                             </TableCell>
@@ -463,7 +468,7 @@ export default function InvoiceForm() {
                                     ))}
                                 </div>
                             )}
-                        <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => append({ description: "", hsnCode: "", qty: 1, rate: 0, per: "Pcs", amount: 0 })}>
+                        <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => append({ description: "", hsnCode: "", qty: 1, rate: 0, per: "Pcs", amount: 0, taxRate: 18 })}>
                             <Plus className="mr-2 h-4 w-4" /> Add Item
                         </Button>
                     </CardContent>
@@ -491,7 +496,7 @@ export default function InvoiceForm() {
                                     <span>₹{taxableValue.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span>Tax (18%):</span>
+                                    <span>Tax (GST):</span>
                                     <span>₹{totalTax.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between font-bold text-lg border-t pt-2">

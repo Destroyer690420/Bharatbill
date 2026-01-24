@@ -148,30 +148,41 @@ export default function InvoicePrint() {
     const freightCharges = parseFloat(invoice.freightCharges || 0);
     let totalQty = 0;
     let totalTaxable = 0;
+    let totalItemTax = 0;
 
     const itemsWithTax = (invoice.items || []).map(item => {
         const qty = parseFloat(item.qty) || 0;
         const rate = parseFloat(item.rate) || 0;
         const amount = qty * rate;
+        const itemTaxRate = parseFloat(item.taxRate) || 18; // Default to 18% for backward compatibility
+        const itemTax = amount * (itemTaxRate / 100);
 
         totalQty += qty;
         totalTaxable += amount;
+        totalItemTax += itemTax;
 
         return {
             ...item,
             amount,
+            itemTax,
+            itemTaxRate,
         };
     });
 
     const subTotal = totalTaxable;
     const taxableValue = subTotal + freightCharges;
-    const totalTaxAmount = taxableValue * 0.18;
+    // Tax on freight (use 18% for services)
+    const freightTax = freightCharges * 0.18;
+    const totalTaxAmount = totalItemTax + freightTax;
     const totalAmountBeforeRoundoff = taxableValue + totalTaxAmount;
     const grandTotal = Math.round(totalAmountBeforeRoundoff);
     const roundOffAmount = grandTotal - totalAmountBeforeRoundoff;
 
     const taxWordAmount = Math.round(totalTaxAmount);
     const grandTotalWordAmount = grandTotal;
+
+    // Calculate effective tax rate for display purposes
+    const effectiveTaxRate = taxableValue > 0 ? (totalTaxAmount / taxableValue * 100).toFixed(1) : 18;
 
     // Get document type and determine appropriate labels
     const documentType = invoice.documentType || "Tax Invoice";
@@ -280,7 +291,7 @@ export default function InvoicePrint() {
                             <span>₹{taxableValue.toFixed(2)}</span>
                         </div>
                         <div className="total-row">
-                            <span>{isIGST ? "IGST @ 18%" : "GST (CGST 9% + SGST 9%)"}</span>
+                            <span>{isIGST ? `IGST @ ${effectiveTaxRate}%` : `GST (CGST ${(effectiveTaxRate / 2).toFixed(1)}% + SGST ${(effectiveTaxRate / 2).toFixed(1)}%)`}</span>
                             <span>₹{totalTaxAmount.toFixed(2)}</span>
                         </div>
                         <div className="total-row grand-total">
@@ -563,14 +574,14 @@ export default function InvoicePrint() {
                                     <td className="text-right">{taxableValue.toFixed(2)}</td>
                                     {isIGST ? (
                                         <>
-                                            <td className="text-right">18%</td>
+                                            <td className="text-right">{effectiveTaxRate}%</td>
                                             <td className="text-right">{totalTaxAmount.toFixed(2)}</td>
                                         </>
                                     ) : (
                                         <>
-                                            <td className="text-right">9%</td>
+                                            <td className="text-right">{(effectiveTaxRate / 2).toFixed(1)}%</td>
                                             <td className="text-right">{(totalTaxAmount / 2).toFixed(2)}</td>
-                                            <td className="text-right">9%</td>
+                                            <td className="text-right">{(effectiveTaxRate / 2).toFixed(1)}%</td>
                                             <td className="text-right">{(totalTaxAmount / 2).toFixed(2)}</td>
                                         </>
                                     )}
