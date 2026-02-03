@@ -203,147 +203,228 @@ export default function InvoicePrint() {
         }
     };
 
-    // Professional Quotation Layout (Single Page)
-    const renderQuotation = () => (
-        <div className="quotation-page">
-            <div className="quotation-container">
-                {/* Header */}
-                <div className="quotation-header">
-                    <div className="company-info">
-                        <div className="company-name">{company.companyName}</div>
-                        <div className="company-address">{company.address}</div>
-                        <div style={{ fontSize: '9pt', marginTop: '4px' }}>GSTIN: {company.gstin}</div>
-                        <div style={{ fontSize: '9pt' }}>State: {company.state} ({company.stateCode})</div>
-                    </div>
-                    <div className="quotation-title-section">
-                        <div className="quotation-title">{documentType.toUpperCase()}</div>
-                        <div className="quotation-details">
-                            <div className="detail-row">
-                                <span className="detail-label">Quotation No:</span>
-                                <span className="detail-value">{invoice.invoiceNo}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="detail-label">Date:</span>
-                                <span className="detail-value">{format(new Date(invoice.date), "dd-MMM-yyyy")}</span>
-                            </div>
-                            {validUntilDate && (
-                                <div className="detail-row">
-                                    <span className="detail-label">Valid Until:</span>
-                                    <span className="detail-value">{format(validUntilDate, "dd-MMM-yyyy")}</span>
-                                </div>
+    // Calculate items per page - first page has less space due to header/client info
+    const ITEMS_PER_FIRST_PAGE = 10;
+    const ITEMS_PER_CONTINUATION_PAGE = 18;
+
+    // Split items into pages
+    const getQuotationPages = () => {
+        const pages = [];
+        const totalItems = itemsWithTax.length;
+
+        if (totalItems <= ITEMS_PER_FIRST_PAGE) {
+            // Everything fits on one page
+            pages.push({ items: itemsWithTax, isFirstPage: true, isLastPage: true, startIndex: 0 });
+        } else {
+            // First page
+            pages.push({
+                items: itemsWithTax.slice(0, ITEMS_PER_FIRST_PAGE),
+                isFirstPage: true,
+                isLastPage: false,
+                startIndex: 0
+            });
+
+            // Continuation pages
+            let remaining = totalItems - ITEMS_PER_FIRST_PAGE;
+            let currentIndex = ITEMS_PER_FIRST_PAGE;
+
+            while (remaining > 0) {
+                const itemsForThisPage = Math.min(remaining, ITEMS_PER_CONTINUATION_PAGE);
+                const isLast = remaining <= ITEMS_PER_CONTINUATION_PAGE;
+
+                pages.push({
+                    items: itemsWithTax.slice(currentIndex, currentIndex + itemsForThisPage),
+                    isFirstPage: false,
+                    isLastPage: isLast,
+                    startIndex: currentIndex
+                });
+
+                currentIndex += itemsForThisPage;
+                remaining -= itemsForThisPage;
+            }
+        }
+
+        return pages;
+    };
+
+    // Professional Quotation Layout (Multi-Page Support)
+    const renderQuotation = () => {
+        const pages = getQuotationPages();
+        const totalPages = pages.length;
+
+        return pages.map((page, pageIndex) => (
+            <div className="quotation-page" key={pageIndex}>
+                <div className="quotation-container">
+                    {/* Header - Always show on all pages */}
+                    <div className="quotation-header">
+                        <div className="company-info">
+                            <div className="company-name">{company.companyName}</div>
+                            {page.isFirstPage && (
+                                <>
+                                    <div className="company-address">{company.address}</div>
+                                    <div style={{ fontSize: '9pt', marginTop: '4px' }}>GSTIN: {company.gstin}</div>
+                                    <div style={{ fontSize: '9pt' }}>State: {company.state} ({company.stateCode})</div>
+                                </>
                             )}
                         </div>
-                    </div>
-                </div>
-
-                {/* Client Section */}
-                <div className="client-section">
-                    <div className="section-title">Quotation For:</div>
-                    <div className="client-name">{buyer?.name}</div>
-                    <div className="client-address">{buyer?.address}</div>
-                    {buyer?.gstin && <div style={{ fontSize: '9pt', marginTop: '4px' }}>GSTIN: {buyer.gstin}</div>}
-                    {buyer?.state && <div style={{ fontSize: '9pt' }}>State: {buyer.state}</div>}
-                </div>
-
-                {/* Items Table */}
-                <div className="items-section">
-                    <table className="quotation-table">
-                        <thead>
-                            <tr>
-                                <th className="col-sno">S.No</th>
-                                <th className="col-description">Description</th>
-                                <th className="col-hsn">HSN</th>
-                                <th className="col-qty">Qty</th>
-                                <th className="col-rate">Rate</th>
-                                <th className="col-amount">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {itemsWithTax.map((item, index) => (
-                                <tr key={index}>
-                                    <td className="text-center">{index + 1}</td>
-                                    <td className="description-cell">{item.description}</td>
-                                    <td className="text-center text-sm">{item.hsnCode}</td>
-                                    <td className="text-center">{item.qty} {item.per}</td>
-                                    <td className="text-right">₹{parseFloat(item.rate).toFixed(2)}</td>
-                                    <td className="text-right font-semibold">₹{parseFloat(item.amount).toFixed(2)}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Totals Section */}
-                <div className="totals-section">
-                    <div className="totals-grid">
-                        <div className="total-row">
-                            <span>Subtotal:</span>
-                            <span>₹{subTotal.toFixed(2)}</span>
-                        </div>
-                        {freightCharges > 0 && (
-                            <div className="total-row">
-                                <span>Freight Charges:</span>
-                                <span>₹{freightCharges.toFixed(2)}</span>
+                        <div className="quotation-title-section">
+                            <div className="quotation-title">{documentType.toUpperCase()}</div>
+                            <div className="quotation-details">
+                                <div className="detail-row">
+                                    <span className="detail-label">Quotation No:</span>
+                                    <span className="detail-value">{invoice.invoiceNo}</span>
+                                </div>
+                                <div className="detail-row">
+                                    <span className="detail-label">Date:</span>
+                                    <span className="detail-value">{format(new Date(invoice.date), "dd-MMM-yyyy")}</span>
+                                </div>
+                                {page.isFirstPage && validUntilDate && (
+                                    <div className="detail-row">
+                                        <span className="detail-label">Valid Until:</span>
+                                        <span className="detail-value">{format(validUntilDate, "dd-MMM-yyyy")}</span>
+                                    </div>
+                                )}
+                                {totalPages > 1 && (
+                                    <div className="detail-row">
+                                        <span className="detail-label">Page:</span>
+                                        <span className="detail-value">{pageIndex + 1} of {totalPages}</span>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                        <div className="total-row">
-                            <span>Taxable Value:</span>
-                            <span>₹{taxableValue.toFixed(2)}</span>
-                        </div>
-                        <div className="total-row">
-                            <span>{isIGST ? `IGST @ ${effectiveTaxRate}%` : `GST (CGST ${(effectiveTaxRate / 2).toFixed(1)}% + SGST ${(effectiveTaxRate / 2).toFixed(1)}%)`}</span>
-                            <span>₹{totalTaxAmount.toFixed(2)}</span>
-                        </div>
-                        <div className="total-row grand-total">
-                            <span>Grand Total:</span>
-                            <span>₹{grandTotal.toFixed(2)}</span>
                         </div>
                     </div>
-                    <div className="amount-words">
-                        Amount in Words: <span className="font-semibold">{numberToWords(grandTotalWordAmount)}</span>
-                    </div>
-                </div>
 
-                {/* Terms & Conditions */}
-                <div className="terms-section">
-                    <div className="section-title">Terms & Conditions</div>
-                    <div className="terms-content">
-                        {invoice.termsOfDelivery || company.termsAndConditions ? (
-                            <div className="whitespace-pre-line">{invoice.termsOfDelivery || company.termsAndConditions}</div>
-                        ) : (
-                            <>
-                                <div>1. Prices are valid for 30 days from the quotation date</div>
-                                <div>2. 50% advance payment required to confirm the order, remaining 50% before dispatch</div>
-                                <div>3. Delivery period: 20-30 working days from receipt of advance payment</div>
-                                <div>4. Delivery charges extra as per actual</div>
-                                <div>5. All disputes subject to {company.state} jurisdiction</div>
-                            </>
-                        )}
-                    </div>
-                </div>
+                    {/* Client Section - Only on first page */}
+                    {page.isFirstPage && (
+                        <div className="client-section">
+                            <div className="section-title">Quotation For:</div>
+                            <div className="client-name">{buyer?.name}</div>
+                            <div className="client-address">{buyer?.address}</div>
+                            {buyer?.gstin && <div style={{ fontSize: '9pt', marginTop: '4px' }}>GSTIN: {buyer.gstin}</div>}
+                            {buyer?.state && <div style={{ fontSize: '9pt' }}>State: {buyer.state}</div>}
+                        </div>
+                    )}
 
-                {/* Bank Details */}
-                {company.bankDetails && (
-                    <div className="bank-section">
-                        <div className="section-title">Bank Details</div>
-                        <div className="bank-content">{company.bankDetails}</div>
-                    </div>
-                )}
+                    {/* Continuation notice for non-first pages */}
+                    {!page.isFirstPage && (
+                        <div className="continuation-notice">
+                            <span>Continued from previous page...</span>
+                        </div>
+                    )}
 
-                {/* Footer */}
-                <div className="quotation-footer">
-                    <div className="footer-note">
-                        We trust this quotation meets your requirements and look forward to serving you.
+                    {/* Items Table */}
+                    <div className="items-section">
+                        <table className="quotation-table">
+                            <thead>
+                                <tr>
+                                    <th className="col-sno">S.No</th>
+                                    <th className="col-description">Description</th>
+                                    <th className="col-hsn">HSN</th>
+                                    <th className="col-qty">Qty</th>
+                                    <th className="col-rate">Rate</th>
+                                    <th className="col-amount">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {page.items.map((item, index) => (
+                                    <tr key={index}>
+                                        <td className="text-center">{page.startIndex + index + 1}</td>
+                                        <td className="description-cell">{item.description}</td>
+                                        <td className="text-center text-sm">{item.hsnCode}</td>
+                                        <td className="text-center">{item.qty} {item.per}</td>
+                                        <td className="text-right">₹{parseFloat(item.rate).toFixed(2)}</td>
+                                        <td className="text-right font-semibold">₹{parseFloat(item.amount).toFixed(2)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
-                    <div className="signature-section">
-                        <div>For {company.companyName}</div>
-                        <div className="signature-space"></div>
-                        <div>Authorized Signatory</div>
-                    </div>
+
+                    {/* Continuation notice for non-last pages */}
+                    {!page.isLastPage && (
+                        <div className="page-continuation">
+                            <span>Continued on next page...</span>
+                        </div>
+                    )}
+
+                    {/* Totals Section - Only on last page */}
+                    {page.isLastPage && (
+                        <div className="totals-section">
+                            <div className="totals-grid">
+                                <div className="total-row">
+                                    <span>Subtotal:</span>
+                                    <span>₹{subTotal.toFixed(2)}</span>
+                                </div>
+                                {freightCharges > 0 && (
+                                    <div className="total-row">
+                                        <span>Freight Charges:</span>
+                                        <span>₹{freightCharges.toFixed(2)}</span>
+                                    </div>
+                                )}
+                                <div className="total-row">
+                                    <span>Taxable Value:</span>
+                                    <span>₹{taxableValue.toFixed(2)}</span>
+                                </div>
+                                <div className="total-row">
+                                    <span>{isIGST ? `IGST @ ${effectiveTaxRate}%` : `GST (CGST ${(effectiveTaxRate / 2).toFixed(1)}% + SGST ${(effectiveTaxRate / 2).toFixed(1)}%)`}</span>
+                                    <span>₹{totalTaxAmount.toFixed(2)}</span>
+                                </div>
+                                <div className="total-row grand-total">
+                                    <span>Grand Total:</span>
+                                    <span>₹{grandTotal.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <div className="amount-words">
+                                Amount in Words: <span className="font-semibold">{numberToWords(grandTotalWordAmount)}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Terms & Conditions - Only on last page */}
+                    {page.isLastPage && (
+                        <div className="terms-section">
+                            <div className="section-title">Terms & Conditions</div>
+                            <div className="terms-content">
+                                {invoice.termsOfDelivery || company.termsAndConditions ? (
+                                    <div className="whitespace-pre-line">{invoice.termsOfDelivery || company.termsAndConditions}</div>
+                                ) : (
+                                    <>
+                                        <div>1. Prices are valid for 30 days from the quotation date</div>
+                                        <div>2. 50% advance payment required to confirm the order, remaining 50% before dispatch</div>
+                                        <div>3. Delivery period: 20-30 working days from receipt of advance payment</div>
+                                        <div>4. Delivery charges extra as per actual</div>
+                                        <div>5. All disputes subject to {company.state} jurisdiction</div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Bank Details - Only on last page */}
+                    {page.isLastPage && company.bankDetails && (
+                        <div className="bank-section">
+                            <div className="section-title">Bank Details</div>
+                            <div className="bank-content">{company.bankDetails}</div>
+                        </div>
+                    )}
+
+                    {/* Footer - Only on last page */}
+                    {page.isLastPage && (
+                        <div className="quotation-footer">
+                            <div className="footer-note">
+                                We trust this quotation meets your requirements and look forward to serving you.
+                            </div>
+                            <div className="signature-section">
+                                <div>For {company.companyName}</div>
+                                <div className="signature-space"></div>
+                                <div>Authorized Signatory</div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
-        </div>
-    );
+        ));
+    };
 
     const renderInvoice = (copyNumber) => (
         <div className="a4-page">
@@ -688,7 +769,6 @@ export default function InvoicePrint() {
                 .quotation-page {
                     width: 210mm;
                     min-height: 297mm;
-                    max-height: 297mm;
                     background: white;
                     color: #000;
                     font-family: 'Inter', sans-serif;
@@ -696,15 +776,41 @@ export default function InvoicePrint() {
                     box-sizing: border-box;
                     padding: 15mm 15mm 10mm 15mm;
                     margin: 0 auto;
-                    page-break-after: auto;
+                    page-break-after: always;
+                    page-break-inside: avoid;
                     display: flex;
                     flex-direction: column;
+                }
+
+                .quotation-page:last-child {
+                    page-break-after: auto;
                 }
 
                 .quotation-container {
                     flex: 1;
                     display: flex;
                     flex-direction: column;
+                }
+
+                .continuation-notice {
+                    font-size: 9pt;
+                    color: #6b7280;
+                    font-style: italic;
+                    margin-bottom: 15px;
+                    padding: 8px 12px;
+                    background: #f1f5f9;
+                    border-radius: 4px;
+                    border-left: 3px solid #2563eb;
+                }
+
+                .page-continuation {
+                    font-size: 9pt;
+                    color: #6b7280;
+                    font-style: italic;
+                    margin-top: auto;
+                    padding: 8px 12px;
+                    text-align: center;
+                    border-top: 1px dashed #cbd5e1;
                 }
 
                 .quotation-header {
@@ -982,6 +1088,50 @@ export default function InvoicePrint() {
                 .text-right { text-align: right; }
                 .text-center { text-align: center; }
                 .tax-row { font-style: italic; font-weight: bold; font-size: 8pt; }
+
+                /* === PRINT STYLES === */
+                @media print {
+                    .no-print {
+                        display: none !important;
+                    }
+                    
+                    body {
+                        margin: 0;
+                        padding: 0;
+                    }
+                    
+                    .quotation-page {
+                        width: 210mm;
+                        min-height: 297mm;
+                        page-break-after: always;
+                        page-break-inside: avoid;
+                        margin: 0;
+                        padding: 15mm 15mm 10mm 15mm;
+                        box-shadow: none;
+                    }
+                    
+                    .quotation-page:last-child {
+                        page-break-after: auto;
+                    }
+                    
+                    .a4-page {
+                        page-break-after: always;
+                        page-break-inside: avoid;
+                    }
+                    
+                    .a4-page:last-child {
+                        page-break-after: auto;
+                    }
+                    
+                    .quotation-table {
+                        page-break-inside: auto;
+                    }
+                    
+                    .quotation-table tr {
+                        page-break-inside: avoid;
+                        page-break-after: auto;
+                    }
+                }
             `}</style>
 
             <div className="no-print fixed top-0 left-0 right-0 bg-card text-card-foreground border-b border-border p-4 flex justify-between items-center z-50">
