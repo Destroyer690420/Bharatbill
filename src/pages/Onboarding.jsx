@@ -52,14 +52,14 @@ export default function Onboarding() {
 
             await setDoc(doc(db, "users", currentUser.uid), {
                 companyProfile: formData,
-                createdAt: new Date(),
-            });
+                updatedAt: new Date(),
+            }, { merge: true });
 
-            // navigate("/"); // Let PrivateRoute handle the redirect once profile is detected
+            // Let PrivateRoute handle the redirect once profile is detected
         } catch (err) {
             setError("Failed to save profile: " + err.message);
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     return (

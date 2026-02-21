@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function Login() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const { loginWithGoogle, signupWithEmail, loginWithEmail } = useAuth();
+    const { loginWithGoogle, signupWithEmail, loginWithEmail, currentUser } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (currentUser) {
+            navigate("/");
+        }
+    }, [currentUser, navigate]);
 
     // Login form state
     const [loginEmail, setLoginEmail] = useState("");
@@ -29,11 +35,10 @@ export default function Login() {
             setError("");
             setLoading(true);
             await loginWithGoogle();
-            navigate("/");
         } catch (err) {
             setError("Failed to log in with Google: " + err.message);
+            setLoading(false);
         }
-        setLoading(false);
     }
 
     async function handleEmailLogin(e) {
@@ -50,11 +55,10 @@ export default function Login() {
             setError("");
             setLoading(true);
             await loginWithEmail(loginEmail, loginPassword);
-            navigate("/");
         } catch (err) {
             setError("Failed to log in: " + err.message);
+            setLoading(false);
         }
-        setLoading(false);
     }
 
     async function handleEmailSignup(e) {
@@ -81,11 +85,10 @@ export default function Login() {
             setError("");
             setLoading(true);
             await signupWithEmail(signupEmail, signupPassword, signupName);
-            navigate("/");
         } catch (err) {
             setError("Failed to create account: " + err.message);
+            setLoading(false);
         }
-        setLoading(false);
     }
 
     return (
