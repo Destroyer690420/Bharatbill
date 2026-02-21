@@ -416,7 +416,11 @@ export default function InvoicePrint() {
                             </div>
                             <div className="signature-section">
                                 <div>For {company.companyName}</div>
-                                <div className="signature-space"></div>
+                                <div className="signature-space" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                    {company.signatureDataUrl && (
+                                        <img src={company.signatureDataUrl} alt="Signature" style={{ maxHeight: '50px', maxWidth: '150px', objectFit: 'contain' }} />
+                                    )}
+                                </div>
                                 <div>Authorized Signatory</div>
                             </div>
                         </div>
@@ -705,7 +709,11 @@ export default function InvoicePrint() {
                         </div>
                         <div className="col w-50" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '4px' }}>
                             <div className="small text-right bold">For {company.companyName}</div>
-                            <br /><br />
+                            <div style={{ height: '50px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                {company.signatureDataUrl && (
+                                    <img src={company.signatureDataUrl} alt="Signature" style={{ maxHeight: '50px', maxWidth: '150px', objectFit: 'contain' }} />
+                                )}
+                            </div>
                             <div className="small text-right">Authorised Signatory</div>
                         </div>
                     </div>

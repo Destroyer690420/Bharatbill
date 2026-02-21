@@ -367,7 +367,15 @@ export default function PartyLedger() {
                         {/* Footer */}
                         <div className="mt-4 flex justify-between items-end text-xs">
                             <div>I/We hereby confirm the above</div>
-                            <div>Yours faithfully,</div>
+                            <div className="text-right">
+                                <div className="font-bold">For {company.companyName}</div>
+                                <div style={{ height: '50px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                    {company.signatureDataUrl && (
+                                        <img src={company.signatureDataUrl} alt="Signature" style={{ maxHeight: '50px', maxWidth: '150px', objectFit: 'contain' }} />
+                                    )}
+                                </div>
+                                <div>Authorised Signatory</div>
+                            </div>
                         </div>
                     </div>
                 </div>

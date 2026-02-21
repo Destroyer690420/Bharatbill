@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2, Moon, Sun } from "lucide-react";
+import { CheckCircle2, Moon, Sun, Upload, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { STATE_CODES, getStateNameByCode } from "@/lib/stateCodes";
 
@@ -30,7 +30,43 @@ export default function Settings() {
         accountNo: "",
         ifsc: "",
         branch: "",
+        signatureDataUrl: "",
     });
+
+    const signatureInputRef = useRef(null);
+
+    const handleSignatureUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_W = 300, MAX_H = 150;
+                let w = img.width, h = img.height;
+                if (w > MAX_W) { h = h * (MAX_W / w); w = MAX_W; }
+                if (h > MAX_H) { w = w * (MAX_H / h); h = MAX_H; }
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                const dataUrl = canvas.toDataURL('image/png', 0.9);
+                setFormData(prev => ({ ...prev, signatureDataUrl: dataUrl }));
+                if (success) setSuccess("");
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+        // Reset input so same file can be re-selected
+        e.target.value = '';
+    };
+
+    const removeSignature = () => {
+        setFormData(prev => ({ ...prev, signatureDataUrl: "" }));
+        if (success) setSuccess("");
+    };
 
     // Theme state
     const [theme, setTheme] = useState(() => {
@@ -230,6 +266,41 @@ export default function Settings() {
                                     <Input id="branch" value={formData.branch} onChange={handleChange} />
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <h3 className="font-semibold text-lg pt-4 border-t">Authorised Signature <span className="text-sm font-normal text-muted-foreground">(Optional)</span></h3>
+                            <p className="text-sm text-muted-foreground">Upload your signature image. It will appear on invoices, quotations, and ledgers.</p>
+                            <input
+                                ref={signatureInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleSignatureUpload}
+                            />
+                            {formData.signatureDataUrl ? (
+                                <div className="flex items-center gap-4">
+                                    <div className="border rounded-lg p-3 bg-white dark:bg-zinc-900">
+                                        <img
+                                            src={formData.signatureDataUrl}
+                                            alt="Signature Preview"
+                                            style={{ maxHeight: '60px', maxWidth: '200px', objectFit: 'contain' }}
+                                        />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button type="button" variant="outline" size="sm" onClick={() => signatureInputRef.current?.click()}>
+                                            <Upload className="h-4 w-4 mr-1" /> Change
+                                        </Button>
+                                        <Button type="button" variant="destructive" size="sm" onClick={removeSignature}>
+                                            <Trash2 className="h-4 w-4 mr-1" /> Remove
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <Button type="button" variant="outline" onClick={() => signatureInputRef.current?.click()}>
+                                    <Upload className="h-4 w-4 mr-2" /> Upload Signature
+                                </Button>
+                            )}
                         </div>
 
                         <div className="flex justify-end">
