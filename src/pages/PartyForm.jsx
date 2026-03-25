@@ -40,7 +40,7 @@ export default function PartyForm() {
                     setFormData(docSnap.data());
                 }
             } catch (err) {
-                setError("Failed to load party: " + err.message);
+                setError("Failed to load party. Please try again.");
             }
         };
 
@@ -60,7 +60,7 @@ export default function PartyForm() {
             }
             navigate("/parties");
         } catch (err) {
-            setError("Failed to save party: " + err.message);
+            setError("Failed to save party. Please try again.");
         }
         setLoading(false);
     };

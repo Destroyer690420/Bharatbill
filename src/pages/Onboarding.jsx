@@ -57,7 +57,7 @@ export default function Onboarding() {
 
             // Let PrivateRoute handle the redirect once profile is detected
         } catch (err) {
-            setError("Failed to save profile: " + err.message);
+            setError("Failed to save profile. Please try again.");
             setLoading(false);
         }
     };

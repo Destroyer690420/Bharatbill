@@ -33,7 +33,6 @@ export default function Payments() {
             try {
                 await deleteDoc(doc(db, "users", currentUser.uid, "payments", id));
             } catch (err) {
-                console.error("Error deleting payment:", err);
             }
         }
     };

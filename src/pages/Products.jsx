@@ -32,7 +32,6 @@ export default function Products() {
             try {
                 await deleteDoc(doc(db, "users", currentUser.uid, "products", id));
             } catch (err) {
-                console.error("Error deleting product:", err);
             }
         }
     };

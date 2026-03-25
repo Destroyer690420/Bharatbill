@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import html2pdf from "html2pdf.js";
 import { Download } from "lucide-react";
 import { useParams } from "react-router-dom";
@@ -23,18 +23,14 @@ export default function InvoicePrint() {
         }
         const fetchInvoice = async () => {
             try {
-                console.log("Fetching invoice with id:", id);
                 const docSnap = await getDoc(doc(db, "users", currentUser.uid, "invoices", id));
                 if (docSnap.exists()) {
-                    console.log("Invoice data:", docSnap.data());
                     setInvoice(docSnap.data());
                 } else {
-                    console.log("Invoice document does not exist");
                     setError("Invoice not found in database");
                 }
             } catch (err) {
-                console.error("Error fetching invoice:", err);
-                setError("Error loading invoice: " + err.message);
+                setError("Error loading invoice. Please try again.");
             }
             setLoading(false);
         };

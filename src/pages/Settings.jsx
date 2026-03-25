@@ -39,6 +39,21 @@ export default function Settings() {
         const file = e.target.files[0];
         if (!file) return;
 
+        // Validate file type
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            setError("Invalid file type. Please upload a PNG, JPEG, or WebP image.");
+            e.target.value = '';
+            return;
+        }
+
+        // Validate file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            setError("File too large. Maximum size is 2MB.");
+            e.target.value = '';
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = (event) => {
             const img = new Image();
@@ -99,7 +114,6 @@ export default function Settings() {
                     setFormData(docSnap.data().companyProfile);
                 }
             } catch (err) {
-                console.error("Error fetching profile:", err);
                 setError("Failed to load profile data.");
             } finally {
                 setFetchLoading(false);
@@ -128,7 +142,7 @@ export default function Settings() {
 
             setSuccess("Settings saved successfully!");
         } catch (err) {
-            setError("Failed to save settings: " + err.message);
+            setError("Failed to save settings. Please try again.");
         }
         setLoading(false);
     };

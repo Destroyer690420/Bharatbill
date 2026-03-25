@@ -73,7 +73,6 @@ export default function PartyLedger() {
                 processLedger(allInvoices, allPayments, startDate, endDate);
 
             } catch (err) {
-                console.error("Error fetching ledger data:", err);
             } finally {
                 setLoading(false);
             }

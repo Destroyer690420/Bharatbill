@@ -8,6 +8,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+// Map Firebase error codes to user-friendly messages
+function getAuthErrorMessage(err) {
+    const code = err?.code || "";
+    switch (code) {
+        case "auth/user-not-found":
+        case "auth/wrong-password":
+        case "auth/invalid-credential":
+            return "Invalid email or password.";
+        case "auth/email-already-in-use":
+            return "An account with this email already exists.";
+        case "auth/weak-password":
+            return "Password is too weak. Please choose a stronger password.";
+        case "auth/invalid-email":
+            return "Please enter a valid email address.";
+        case "auth/too-many-requests":
+            return "Too many attempts. Please try again later.";
+        case "auth/popup-closed-by-user":
+            return "Sign-in popup was closed. Please try again.";
+        default:
+            return "An unexpected error occurred. Please try again.";
+    }
+}
+
 export default function Login() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
@@ -36,7 +59,7 @@ export default function Login() {
             setLoading(true);
             await loginWithGoogle();
         } catch (err) {
-            setError("Failed to log in with Google: " + err.message);
+            setError(getAuthErrorMessage(err));
             setLoading(false);
         }
     }
@@ -44,7 +67,6 @@ export default function Login() {
     async function handleEmailLogin(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log("Login handler called");
 
         if (!loginEmail || !loginPassword) {
             setError("Please fill in all fields");
@@ -56,7 +78,7 @@ export default function Login() {
             setLoading(true);
             await loginWithEmail(loginEmail, loginPassword);
         } catch (err) {
-            setError("Failed to log in: " + err.message);
+            setError(getAuthErrorMessage(err));
             setLoading(false);
         }
     }
@@ -64,7 +86,6 @@ export default function Login() {
     async function handleEmailSignup(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log("Signup handler called");
 
         if (!signupName || !signupEmail || !signupPassword || !confirmPassword) {
             setError("Please fill in all fields");
@@ -76,8 +97,18 @@ export default function Login() {
             return;
         }
 
-        if (signupPassword.length < 6) {
-            setError("Password must be at least 6 characters");
+        if (signupPassword.length < 8) {
+            setError("Password must be at least 8 characters");
+            return;
+        }
+
+        if (!/[A-Z]/.test(signupPassword)) {
+            setError("Password must contain at least one uppercase letter");
+            return;
+        }
+
+        if (!/[0-9]/.test(signupPassword)) {
+            setError("Password must contain at least one number");
             return;
         }
 
@@ -86,7 +117,7 @@ export default function Login() {
             setLoading(true);
             await signupWithEmail(signupEmail, signupPassword, signupName);
         } catch (err) {
-            setError("Failed to create account: " + err.message);
+            setError(getAuthErrorMessage(err));
             setLoading(false);
         }
     }

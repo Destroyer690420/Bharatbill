@@ -41,7 +41,6 @@ export default function Quotations() {
             try {
                 await deleteDoc(doc(db, "users", currentUser.uid, "invoices", id));
             } catch (err) {
-                console.error("Error deleting quotation:", err);
             }
         }
     };

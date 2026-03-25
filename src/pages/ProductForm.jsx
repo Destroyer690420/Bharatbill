@@ -50,7 +50,7 @@ export default function ProductForm() {
                     setFormData(docSnap.data());
                 }
             } catch (err) {
-                setError("Failed to load product: " + err.message);
+                setError("Failed to load product. Please try again.");
             }
         };
 
@@ -88,7 +88,7 @@ export default function ProductForm() {
             }
             navigate("/products");
         } catch (err) {
-            setError("Failed to save product: " + err.message);
+            setError("Failed to save product. Please try again.");
         }
         setLoading(false);
     };

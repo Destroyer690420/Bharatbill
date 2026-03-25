@@ -1,9 +1,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow users to read and write only their own data
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // Allow users to read and manage only their own data
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Allow create and update but NOT delete on the root user document
+      allow create, update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.keys().hasAny(['companyProfile', 'email', 'displayName', 'createdAt', 'updatedAt'])
+        && request.resource.size() < 1048576; // 1MB max document size
+
+      // Subcollections: parties, products, invoices, payments
+      match /parties/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /products/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /invoices/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /payments/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
   }
 }

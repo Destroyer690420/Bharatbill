@@ -219,7 +219,7 @@ export default function InvoiceForm() {
             }
             navigate("/invoices");
         } catch (err) {
-            setError("Failed to save invoice: " + err.message);
+            setError("Failed to save invoice. Please try again.");
         }
         setLoading(false);
     };

@@ -32,7 +32,6 @@ export default function Parties() {
             try {
                 await deleteDoc(doc(db, "users", currentUser.uid, "parties", id));
             } catch (err) {
-                console.error("Error deleting party:", err);
             }
         }
     };

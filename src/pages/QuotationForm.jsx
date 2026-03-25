@@ -219,7 +219,7 @@ export default function QuotationForm() {
             }
             navigate("/quotations");
         } catch (err) {
-            setError("Failed to save quotation: " + err.message);
+            setError("Failed to save quotation. Please try again.");
         }
         setLoading(false);
     };

@@ -52,7 +52,6 @@ export default function Invoices() {
             try {
                 await deleteDoc(doc(db, "users", currentUser.uid, "invoices", id));
             } catch (err) {
-                console.error("Error deleting invoice:", err);
             }
         }
     };
@@ -122,21 +121,18 @@ export default function Invoices() {
                         setIsReportModalOpen(false);
                         setReportData(null); // Clear data after generation
                     }).catch(pdfErr => {
-                        console.error("PDF Generation Error:", pdfErr);
-                        alert("Failed to generate PDF: " + pdfErr.message);
+                        alert("Failed to generate PDF. Please try again.");
                         setGeneratingReport(false);
                     });
                 } catch (innerErr) {
-                    console.error("Error in timeout:", innerErr);
-                    alert("An error occurred while preparing the PDF: " + innerErr.message);
+                    alert("An error occurred while preparing the PDF. Please try again.");
                     setGeneratingReport(false);
                 }
             }, 1000); // Increased timeout to ensure rendering
 
         } catch (err) {
-            console.error("Error fetching data:", err);
             setGeneratingReport(false);
-            alert("Failed to fetch data: " + err.message);
+            alert("Failed to fetch invoice data. Please try again.");
         }
     };
 

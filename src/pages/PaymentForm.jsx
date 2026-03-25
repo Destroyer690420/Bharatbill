@@ -72,7 +72,7 @@ export default function PaymentForm() {
             }
             navigate("/payments");
         } catch (err) {
-            setError("Failed to save payment: " + err.message);
+            setError("Failed to save payment. Please try again.");
         } finally {
             setLoading(false);
         }
