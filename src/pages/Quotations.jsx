@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, orderBy, deleteDoc, doc, where, limit } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, deleteDoc, doc, where } from "firebase/firestore";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,12 +17,11 @@ export default function Quotations() {
     useEffect(() => {
         if (!currentUser) return;
 
-        // Only fetch Quotations and Proforma Invoices - limit to 50 most recent for performance
+        // Only fetch Quotations and Proforma Invoices
         // Note: orderBy removed temporarily to avoid index requirement
         const q = query(
             collection(db, "users", currentUser.uid, "invoices"),
-            where("documentType", "in", ["Quotation", "Proforma Invoice"]),
-            limit(50)
+            where("documentType", "in", ["Quotation", "Proforma Invoice"])
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {

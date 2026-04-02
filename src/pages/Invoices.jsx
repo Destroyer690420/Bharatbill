@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, orderBy, deleteDoc, doc, where, limit, getDocs } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, deleteDoc, doc, where, getDocs } from "firebase/firestore";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -28,12 +28,11 @@ export default function Invoices() {
     useEffect(() => {
         if (!currentUser) return;
 
-        // Only fetch Tax Invoices - limit to 50 most recent for performance
+        // Only fetch Tax Invoices
         // Note: orderBy removed temporarily to avoid index requirement
         const q = query(
             collection(db, "users", currentUser.uid, "invoices"),
-            where("documentType", "==", "Tax Invoice"),
-            limit(50)
+            where("documentType", "==", "Tax Invoice")
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
